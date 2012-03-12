@@ -1,0 +1,35 @@
+{% load pagination-tags %}
+{% extends base_template %}
+{% block title %}Ambulances{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page active"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+
+<h2>Ambulances by Location</h2>
+<table>
+    <thead>
+        <th>Location</th>
+        <th>Number of Ambulances</th>
+    </thead>
+    <tbody>{% for amb in locations %}
+        <tr>
+            <td>{{amb.location.name}}</td><td><a href="/ubuzima/ambulances/location/{{amb.location.id}}">{{amb.ambulances.length}}</a></td>
+        </tr>
+{% endfor %}</tbody>
+    <tfoot>
+        <tr>
+            {% paginator locations %}
+        </tr>
+        <tr>
+            Ambulance Stations: {{ locations.paginator.count }}
+        </tr>
+    </tfoot>
+</table>
+{% endblock %}

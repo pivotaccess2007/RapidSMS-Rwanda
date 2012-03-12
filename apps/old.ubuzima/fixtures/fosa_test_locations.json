@@ -1,0 +1,31 @@
+[
+    {
+        "pk": 1,
+        "model": "locations.location",
+        "fields": {
+            "name": "Biryogo",
+	    "type": 5,
+	    "code": "F01001"
+       }
+    },
+    
+    {
+        "pk": 2,
+        "model": "locations.location",
+        "fields": {
+            "name": "Est",
+	    "type": 1,
+	    "code": "05"
+       }
+    },
+    {
+        "pk": 3,
+        "model": "locations.location",
+        "fields": {
+        "name": "Gashora",
+	    "type": 4,
+	    "code": "F05094"
+       }
+   }    
+    
+]

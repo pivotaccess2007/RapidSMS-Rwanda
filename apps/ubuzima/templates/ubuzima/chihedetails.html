@@ -1,0 +1,55 @@
+{% extends base_template %}
+{% block title %}{{stattitle}}{% endblock %}
+{% block javascripts %}
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/stats.css" />
+{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+	<li class="page active"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% load pagination-tags %}
+
+{% block content %}
+<h2>{{stattitle}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{locationname}}&nbsp;&nbsp;From&nbsp; {{start_date}} &nbsp;&nbsp;TO &nbsp;{{end_date}}<div align="right"><a href="/ubuzima/stats{%if postqn%}?{{postqn}}{%endif%}"> <img src="/static/webapp/icons/silk/decline.png"  border="0"></a></div></h2>
+<table width="100%">
+    <thead>
+        <tr>
+            <th>Report ID</th>
+            <th>Reporter Identity</th>
+            <th>Location</th>
+            <th>Patient</th>
+            <!--<th>Expected Due Date</th>
+	    <th>Received At</th>-->
+	    <th>Report Details</th>
+	    <th>Supervisors</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%for pt in reports.object_list %}
+        <tr>
+            <td{%if pt.is_risky %} class="lagging"{%endif%}><a href="/ubuzima/report/{{pt.id}}">{{pt.id}}</a></td>
+            <td><a href="/ubuzima/reporter/{{pt.reporter.id}}">{{pt.reporter.connection.identity}}</a></td>
+            <td><a href="/ubuzima/location/{{pt.location.id}}">{{pt.location}}</a></td>
+            <td><a href="/ubuzima/patient/{{pt.patient.id}}">{{pt.patient}}</a></td>
+            <!--<td>{{pt.show_edd}}</td>
+	    <td>{{pt.date}}</td>-->
+		<td>{{pt.summary}}</td>
+		<td>{%for sup in pt.reporter.reporter_sups %}{{sup.connection.identity}}<br/>{%endfor%}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="7">{% paginator reports %}</td>
+        </tr>
+        <tr>
+            <td colspan="7">Matching Reports: {{ reports.paginator.count }}</td>
+        </tr>
+    </tfoot>
+</table>
+{% endblock %}

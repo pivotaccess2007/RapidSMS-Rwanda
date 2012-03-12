@@ -1,0 +1,51 @@
+{% extends base_template %}
+{% block title %}{{stattitle}}{% endblock %}
+{% block javascripts %}
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/stats.css" />
+{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+	<li class="page active"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% load pagination-tags %}
+
+{% block content %}
+<h2>{{stattitle}}</h2>
+<table width="100%">
+    <thead>
+        <tr>
+            <th>Report ID</th>
+            <th>Reporter Identity</th>
+            <th>Location</th>
+            <th>Patient</th>
+            {%if "expected" in request.path %}<th>Expected Due Date</th>{%endif%}
+	    <th>Created at</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%for pt in reports.object_list %}
+        <tr>
+            <td{%if pt.is_risky %} class="lagging"{%endif%}><a href="/ubuzima/report/{{pt.id}}">{{pt.id}}</a></td>
+            <td><a href="/ubuzima/reporter/{{pt.reporter.id}}">{{pt.reporter.connection.identity}}</a></td>
+            <td><a href="/ubuzima/location/{{pt.location.id}}">{{pt.location}}</a></td>
+            <td><a href="/ubuzima/patient/{{pt.patient.id}}">{{pt.patient}}</a></td>
+            {%if "expected" in request.path %}<td>{{pt.show_edd}}</td>{%endif%}
+	    <td>{{pt.date}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="5">{% paginator reports %}</td>
+        </tr>
+        <tr>
+            <td colspan="5">Matching Reports: {{ reports.paginator.count }}</td>
+        </tr>
+    </tfoot>
+</table>
+{% endblock %}

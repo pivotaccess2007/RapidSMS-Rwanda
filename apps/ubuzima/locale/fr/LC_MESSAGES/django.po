@@ -1,0 +1,197 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-03-12 11:07+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: app.py:51
+msgid "Unknown Error, please check message format and try again."
+msgstr "Erreur inconnu. Verifiez le format du message et reesayer"
+
+#: app.py:55
+msgid "Unknown keyword, please check message format and try again."
+msgstr "Mot cle inconnu. Verifiez le format su message et reesayer"
+
+#: app.py:81
+#, fuzzy
+msgid "The correct message format is: SUP YOUR_ID CLINIC_ID LANG VILLAGE"
+msgstr "Erreur. Le format du message est SUP ID CLINIC_ID LANG VILLAGE"
+
+#: app.py:83
+#, fuzzy
+msgid "The correct message format is: REG YOUR_ID CLINIC_ID LANG VILLAGE"
+msgstr "Erreur. Le format du message est: REG ID CLINIC_ID LANG VILLAGE"
+
+#: app.py:89
+#, python-format
+msgid ""
+"Error.  National ID must be exactly 16 digits, you sent the id: %(nat_id)s"
+msgstr ""
+
+#: app.py:111
+#, fuzzy, python-format
+msgid "Unknown Health Clinic ID: %(clinic)s"
+msgstr ""
+"Erreur. L' identite de la clinique ou de l hopital %(clinic)s n est pas "
+"reconnu."
+
+#: app.py:148
+#, python-format
+msgid "Thank you for registering at %(clinic)s"
+msgstr "Nous vous remercions de vous etre enregistrer a la clinique %(clinic)s"
+
+#: app.py:160
+#, python-format
+msgid "You are not in a group, located at %(location)s, you speak %(language)s"
+msgstr ""
+"Vous n appartenez pas a ce groupe situe a  %(location)s bien que vous "
+"parliez %(language)s"
+
+#: app.py:167
+#, python-format
+msgid "You are a %(group)s, located at %(location)s, you speak %(language)s"
+msgstr "Vous etes un %(group)s, a %(location)s, vouz parlez %(language)s"
+
+#: app.py:171
+msgid "We don't recognize you"
+msgstr "Desole! Nous ne vous reconnaissons pas"
+
+#: app.py:208 app.py:212 app.py:216
+msgid "Invalid date format, must be in the form: DD.MM.YYYY"
+msgstr ""
+"Le format pour la date n est pas correcte, utilisez le format: DD.MM.YYYY"
+
+#: app.py:220
+msgid "Invalid date, cannot be in the future."
+msgstr "La Date mentionnee est ulterieur, ERREUR evidente"
+
+#: app.py:284
+#, fuzzy, python-format
+msgid "Unknown action code: %(invalidcode)s.  "
+msgstr "Erreur. Code pour action inconnu: "
+
+#: app.py:288
+#, fuzzy
+msgid "You cannot give more than one location code"
+msgstr "Vous ne pouvez que donner un seul code pour la localisation"
+
+#: app.py:291
+#, python-format
+msgid "Error.  %(error)s"
+msgstr "Erreur. %(error)s"
+
+#: app.py:377 app.py:431 app.py:477 app.py:529 app.py:580
+#, fuzzy
+msgid "You need to be registered first, use the REG keyword"
+msgstr "Vous n etes pas encore enregistrer, veuillez proceder"
+
+#: app.py:382
+#, fuzzy
+msgid ""
+"The correct format message is: PRE MOTHER_ID LAST_MENSES ACTION_CODE "
+"LOCATION_CODE MOTHER_WEIGHT"
+msgstr ""
+"Erreur. Le format du message est PRE MAMAN_ID DERNIERES_REGLES ACTION_CODE "
+"LOCALISATION_CODE MAMAN_KG"
+
+#: app.py:422
+#, fuzzy
+msgid "Thank you! Pregnancy report submitted successfully."
+msgstr "La grossesse a ete enregistre avec succes"
+
+#: app.py:436
+#, fuzzy
+msgid ""
+"The correct format message is: RISK MOTHER_ID ACTION_CODE LOCATION_CODE "
+"MOTHER_WEIGHT"
+msgstr ""
+"Erreur. Le format du message est RISK MAMAN_ID ACTION_CODE LOCALISATION_CODE "
+"MAMAN_POID"
+
+#: app.py:468
+#, fuzzy
+msgid "Thank you! Risk report submitted successfully."
+msgstr "Merci. Vous venez de nous signaler un Risque"
+
+#: app.py:482
+#, fuzzy
+msgid ""
+"The correct format message is: BIR MOTHER_ID CHILD_NUM ACTION_CODE "
+"LOCATION_CODE CHILD_WEIGHT MUAC"
+msgstr ""
+"Erreur. Le format du message est BIR MAMAN_ID ACTION_CODE LOCALISATION_CODE "
+"POID_ENFANT MUAC"
+
+#: app.py:520
+#, fuzzy
+msgid "Thank you! Birth report submitted successfully."
+msgstr "La naissance a ete enregistre avec succes"
+
+#: app.py:534
+#, fuzzy
+msgid ""
+"The correct format message is: CHI MOTHER_ID CHILD_NUM CHILD_DOB "
+"MOVEMENT_CODE ACTION_CODE MUAC WEIGHT"
+msgstr ""
+"Erreur. Le format du message est CHI MAMAN_ID ENFANT_DATE_NAISSANCE "
+"LOCALISATION_CODE ACTION_CODE MUAC POID"
+
+#: app.py:572
+#, fuzzy
+msgid "Thank you! Child health report submitted successfully."
+msgstr "Merci. La sante de l' enfant a ete enregistre avec succes"
+
+#: app.py:586
+msgid "You have not yet sent a report."
+msgstr "Vous ne nous avez encore rien envoye"
+
+#: app.py:595
+#, fuzzy, python-format
+msgid " Date: %(date)s"
+msgstr "Date: %(date)s"
+
+#, fuzzy
+#~ msgid "We don't recogniz this message"
+#~ msgstr "Ce message est invalid, Veuillez reesayer"
+
+#~ msgid "Unknown clinic id: %(clinic)s"
+#~ msgstr "Clinique %(clinic)s non connu"
+
+#~ msgid "The correct format message is  SUP SUPID CLINICID or HOSPITALID"
+#~ msgstr "Le format approprie du message est SUP SUPID CLINICID or HOSPITALID"
+
+#, fuzzy
+#~ msgid "Thank you for registering at %s(Health unit)"
+#~ msgstr ""
+#~ "Nous vous remercions de vous etre enregistrer a la clinique %(clinic)s"
+
+#, fuzzy
+#~ msgid "Get registered first"
+#~ msgstr "Vous n etes pas encore enregistrer Mr l'agent de sante"
+
+#~ msgid "Always report Pregnancy before any risk report to a patient"
+#~ msgstr "Signalez une grossesse avant tout rapport de Risque"
+
+#, fuzzy
+#~ msgid "Error.  Unknown action code: %s.  "
+#~ msgstr "Erreur. Code pour action inconnu: "
+
+#, fuzzy
+#~ msgid "Error.  You cannot give more than one movement code"
+#~ msgstr "Vous ne pouvez que donner un seul code pour le mouvement"
+
+#, fuzzy
+#~ msgid "Error.  %s"
+#~ msgstr "Erreur. %(error)s"

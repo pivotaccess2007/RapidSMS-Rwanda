@@ -1,0 +1,201 @@
+{% extends "reporters/index.html" %}
+{% load pagination-tags %}
+{% block title %}{% if reporter %}Edit {{ reporter }}{% else %}Add a Reporter{% endif %}{% endblock %}
+
+{% block javascripts %}
+
+<link type="text/css" href="/static/webapp/javascripts/jquery-ui-1.8.10/themes/base/jquery.ui.all.css" rel="stylesheet" />
+		
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/smartcombo.css" />
+<script type="text/javascript" src="/static/webapp/javascripts/jquery-ui-1.8.10/jquery-1.4.4.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/jquery-ui-1.8.10/ui/jquery.ui.core.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/jquery-ui-1.8.10/ui/jquery.ui.widget.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/jquery-ui-1.8.10/ui/jquery.ui.button.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/jquery-ui-1.8.10/ui/jquery.ui.position.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/jquery-ui-1.8.10/ui/jquery.ui.autocomplete.js"></script>
+		
+
+		<script type="text/javascript" src="/static/webapp/javascripts/smartcombo.js" ></script>
+
+<script type="text/javascript" src="/static/reporters/javascripts/clear-form-elements.js"></script>
+<script type="text/javascript" src="/static/reporters/javascripts/cloneable.js"></script>
+
+<script>
+$(function(){
+    $("#locid").combobox({
+            selected: function(event, ui) {
+		window.location ='/reporters/location/' +$(this).attr('value') ;
+               //$("#location").val($("#locations").val());
+		return true;
+            }
+         });
+
+});
+
+function findReporter(form){
+
+window.location="/reporters/reporter"+"?repid="+form.repid.value;
+
+}
+
+</script>
+
+<script type="text/javascript"> 
+
+   function clearText(nodelist,value){
+
+	var collection = nodelist;
+	var field=null
+	for(var i=0; i<collection.length; i++)
+{
+  field=collection[i];
+  if (field.value==value) break
+
+}
+//alert(field.value);
+     field.value = '';
+
+}
+
+
+</script>
+
+{% endblock %}
+
+{% block right %}
+<div class="module">
+	<h2>{% if reporter %}Edit {{ reporter.alias }} at {{ reporter.location.name }}&nbsp;{{ reporter.location.type.name }} {% else %}Add a Reporter{% endif %}</h2>
+	
+	<form method="post" name="fm-rep-add" id="fm-rep-add" action="/reporters/{% if reporter %}{{ reporter.pk }}{% else %}add{% endif %}">
+		<div>
+			<label for="fm-rep-add-alias">Alias</label>
+			<input type="text" class="required" id="fm-rep-add-alias" name="alias"{% if reporter %} value="{{ reporter.alias }}"{% endif %} />
+			<p class="help">Must be alphanumeric, up to 20 characters.</p>
+		</div>
+		<div>
+			<label>Name</label>
+			<div>
+				<input type="text" id="fm-rep-add-first_name" name="first_name"{% if reporter %} value="{{ reporter.first_name }}"{% endif %} />
+				<label for="fm-rep-add-first_name" class="suffix">First<span class="acc"> Name</span></label>
+			</div>
+			<div>
+				<input type="text" id="fm-rep-add-last_name" name="last_name"{% if reporter %} value="{{ reporter.last_name }}"{% endif %} />
+				<label for="fm-rep-add-last_name" class="suffix">Last<span class="acc"> Name</span></label>
+			</div>
+			<div>
+				<input type="text" id="fm-rep-add-village" name="village"{% if reporter %} value="{{ reporter.village }}"{% endif %} />
+				<label for="fm-rep-add-last_name" class="suffix">Village</label>
+			</div>
+		</div>{% if all_backends %}
+		
+		<div id="fm-rep-add-connections">
+			<label>Primary Connection</label>{% if connections %}{% for connection in connections %}
+			<div>
+				<input type="hidden" name="conn-id" value="{{ connection.pk }}" />
+				<select name="conn-backend">
+					<option></option>{% for backend in all_backends %}
+					<option value="{{ backend.pk }}"{% ifequal backend connection.backend %} selected="selected"{% endifequal %}>{{ backend.title }}</option>{% endfor %}
+				</select>
+				<input type="text" name="conn-identity" value="{{ connection.identity }}" /><input type="button" value="Clear" onClick="return clearText(document.forms['fm-rep-add'].elements['conn-identity'],{{ connection.identity }});"/>
+			</div>{% endfor %}{% else %}
+			<div>
+				<select name="conn-backend">
+					<option selected="selected"></option>{% for backend in all_backends %}
+					<option value="{{ backend.pk }}"{% if backend.selected %} selected="selected"{% endif %}>{{ backend.title }}</option>{% endfor %}
+				</select>
+				<input type="text" name="conn-identity" />
+			</div>{% endif %}
+		</div>{% endif %}
+		
+		<div id="fm-rep-add-groups">
+			<label>Primary Group</label>{% if all_groups %}{% if groups %}{% for group in groups %}
+			<div>
+				<select name="group">
+					<option></option>{% for my_group in all_groups %}
+					<option value="{{ my_group.pk }}" class="depth-{{ my_group.depth }}"{% ifequal my_group group %} selected="selected"{% endifequal %}>{{ my_group.title }}</option>{% endfor %}
+				</select>
+			</div>{% endfor %}{% else %}
+			<div>
+				<select name="group">
+					<option></option>{% for my_group in all_groups %}
+					<option value="{{ my_group.pk }}" class="depth-{{ my_group.depth }}">{{ my_group.title }}</option>{% endfor %}
+				</select>
+			</div>{% endif %}{% else %}
+			<div class="no-data">
+				No Groups Yet.
+				<a href="/groups/add" class="add">
+					Add a Group
+				</a>
+			</div>{% endif %}
+		</div>
+		
+		<div class="submit">
+			<input type="submit" value="{% if reporter %}Save Changes{% else %}Add Reporter{% endif %}" />{% if reporter %}
+			<input type="submit" name="delete" value="Delete {{ reporter }}" />{% endif %}
+		</div>
+	</form>
+</div>
+<div>
+    <h2>Errors</h2>
+	<table>
+		<thead>
+			<tr>
+				<th scope="col">ID</th>
+				<th scope="col">Message</th>
+				<th scope="col">Location</th>
+				<th scope="col">Sent on &#133;</th>
+			</tr>
+		</thead>
+		<tbody>{% if errors.object_list %}{% for error in errors.object_list %}
+			<tr>
+                <td>{{error.pk}}</td>
+                <td>{{error.errmsg}}</td>
+		<td>{{error.errby.location}}</td>
+                <td>{{error.created}}</td>
+			</tr>{% endfor %}{% else %}
+			<tr class="no-data">
+				<td colspan="3">
+					No errors. Yet.
+				</td>
+			</tr>{% endif %}
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="3">
+					{% paginator errors %}
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+</div>
+
+<script type="text/javascript">
+	$(function() {
+		
+		/* make the connection(s) div (above) clonable, so
+		 * more than one connection can be added at once */
+		var id ="#fm-rep-add-connections";
+		$(id + " > div").cloneable("connection", true);
+		$(id + " > label").text("Connection(s)");{% if all_groups %}
+		
+		/* groups are also clonable */
+		var id ="#fm-rep-add-groups";
+		$(id + " > div").cloneable("groups", true);
+		$(id + " > label").text("Group(s)");{% endif %}
+		
+		/* validate the form on submit */
+		$("#fm-rep-add").rs_validate();
+	});
+</script>

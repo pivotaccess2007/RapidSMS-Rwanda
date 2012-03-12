@@ -1,0 +1,38 @@
+{% extends base_template %}
+{% load pagination-tags %}
+{% block title %}Ambulances{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+</ul>
+{% endblock %}
+
+{% block content %}
+<h2>Ambulances by Location</h2>
+<h3>
+{% for alph in alphabets %}<a href="/ambulances/alphabetically/{{alph}}">{{alph}}</a>{% if not forloop.last %} &bull; {% endif %}{% endfor %}
+</h3>
+{% if not locations %}
+    {% if letter %}
+        No locations that start with &ldquo;{{letter|upper}}&rdquo;.
+    {% else %}
+        Choose a location from the directory, in order to see and change the ambulance details for it.
+    {% endif %}
+{% else %}
+<table>
+    <thead>
+        <th>Location</th>
+    </thead>
+    <tbody>{% for amb in locations %}
+        <tr>
+            <td><a href="/ambulances/location/{{amb.id}}">{{amb.name}} {{amb.type.name}}</a></td>
+        </tr>
+{% endfor %}</tbody>
+    <tfoot>
+        <tr>
+            <td>Ambulance Stations: {{ locations|length }}</td>
+        </tr>
+    </tfoot>
+</table>
+{% endif %}
+{% endblock %}

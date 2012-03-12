@@ -1,0 +1,41 @@
+{% load pagination-tags %}
+
+<table width="100%"> 
+    <thead>
+        <tr>
+        	<th>Id</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Reporter</th>
+            <th>Patient</th>
+            <th>Message</th>
+        </tr>
+    </thead>
+    <tbody>
+    	{% for report in reports.object_list %}
+            <tr>
+            	<td><a href="/ubuzima/report/{{report.pk}}">{{report.pk}}</a></td>
+                <td>{{report.created|date:"d.m.Y"}}</td>
+                <td><a href="/ubuzima/location/{{report.location.pk}}">{{report.location.name}}</a></td>
+                <td><a href="/ubuzima/type/{{report.type.pk}}">{{report.type.name}}</a></td>
+                <td><a href="/ubuzima/reporter/{{report.reporter.pk}}">{{report.reporter.alias}}</a></td>
+                <td><a href="/ubuzima/patient/{{report.patient.pk}}">{{report.patient.national_id}}</a></td>
+                <td>{{report.summary}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    
+    <tfoot>
+			<tr>
+				<td colspan="10">
+					{% paginator reports %}
+				</td>
+			</tr>
+			<tr>
+				<td colspan="10">
+				Matching Reports: {{ reports.paginator.count }}
+				</td>
+			</tr>
+	</tfoot>
+</table>

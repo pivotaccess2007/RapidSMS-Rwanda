@@ -1,0 +1,42 @@
+{% extends base_template %}
+{% block title %}Indicator Statistics{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+	<li class="page active"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% load pagination-tags %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Reporter Identity</th>
+            <th>Location</th>
+            <th>Patient</th>
+            <th>Type</th>
+            <th>Creation Date</th>
+        </tr>
+    </thead>
+    <thead>
+        <tr>{%for hd in headers%}<td>{{hd}}</td>{% endfor %}</tr>
+        {%for pt in patients.object_list %}
+        <tr>
+            <td>{{pt.reporter.connection.identity}}</td><td>{{pt.location}}</td><td>{{pt.patient}}</td><td>{{pt.type}}</td><td>{{pt.created}}</td>
+        </tr>
+        {% endfor %}
+    </thead>
+    <tfoot>
+        <tr colspan="5">
+            <td>{% paginator patients %}</td>
+        </tr>
+        <tr colspan="5">
+            <td>Matching Reports: {{ patients.paginator.count }}</td>
+        </tr>
+    </tfoot>
+</table>
+{% endblock %}

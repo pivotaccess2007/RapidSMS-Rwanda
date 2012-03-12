@@ -1,0 +1,62 @@
+{% extends base_template %}
+{% block title %}Report{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page active"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+
+<h2>{{report.type.name}} Report</h2>
+<table width="50%"> 
+    <tbody>
+        <tr>
+        	<td>Message Date</td>
+        	<td>{{report.created}}</td>
+        </tr>
+    
+        <tr>
+        	<td>Reporter</td>
+        	<td><a href="/ubuzima/reporter/{{report.reporter.pk}}">{{report.reporter.alias}}</a> ({{report.reporter.connection}})</td>
+        </tr>
+        
+        <tr>
+        	<td>Mother Id</td>
+        	<td><a href="/ubuzima/patient/{{report.patient.pk}}">{{report.patient}}</a>
+        </tr>
+
+        {% if report.date_string %}
+        <tr>
+                <td>Date</td>
+                <td>{{ report.date_string }}</td>
+        </tr>
+        {% endif %}
+    
+        <tr>
+        	<td>Location</td>
+        	<td>{{report.location.name}}
+        </tr>
+        <tr>
+        	<td>Village</td>
+        	<td>{{report.village}}</td>
+        </tr>
+</tbody>
+</table>
+<br/>
+<h2>Fields</h2>
+<table width="50%"> 
+    <tbody>
+    	{% for field in report.fields.all %}
+            <tr>
+            	<td>{{field.type.description}}</a></td>
+                <td>{{field.value}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    
+{% endblock %}

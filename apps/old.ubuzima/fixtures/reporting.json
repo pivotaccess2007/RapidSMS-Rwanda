@@ -1,0 +1,562 @@
+[
+
+    {
+        "pk": 1,
+        "model": "ubuzima.reporttype",
+        "fields": {
+            "name": "Birth"
+         }
+    },
+    {
+        "pk": 2,
+        "model": "ubuzima.reporttype",
+        "fields": {
+            "name": "Death"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "ubuzima.reporttype",
+        "fields": {
+            "name": "Risk"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "ubuzima.reporttype",
+        "fields": {
+            "name": "Pregnancy"
+        }
+    },
+
+    {
+        "pk": 5,
+        "model": "ubuzima.reporttype",
+        "fields": {
+            "name": "Child Health"
+        }
+    },
+
+    {
+        "pk": 1,
+        "model": "ubuzima.fieldcategory",
+        "fields": {
+            "name": "Birth"
+         }
+    },
+    {
+        "pk": 2,
+        "model": "ubuzima.fieldcategory",
+        "fields": {
+            "name": "Death"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "ubuzima.fieldcategory",
+        "fields": {
+            "name": "Risk"
+        }
+    },
+
+    {
+        "pk": 4,
+        "model": "ubuzima.fieldcategory",
+        "fields": {
+            "name": "Movement"
+       }
+    },
+    {
+        "pk": 5,
+        "model": "ubuzima.fieldcategory",
+        "fields": {
+            "name": "Metric"
+       }
+    },
+    {
+        "pk": 6,
+        "model": "ubuzima.fieldcategory",
+        "fields": {
+            "name": "Vaccination"
+       }
+    },
+    {
+        "pk": 1,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "md",
+	    "description": "Maternal Death",
+            "category": "2"
+       }
+    },
+    
+    {
+        "pk": 2,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "mc",
+	    "description": "Miscarriage",
+            "category": "2"
+       }
+    },
+    {
+        "pk": 3,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "cd",
+	    "description": "Child Death",
+            "category": "2"
+       }
+    },
+    {
+        "pk": 4,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "te",
+	    "description": "Mother at term",
+            "category": "1"
+       }
+    },
+    {
+        "pk": 5,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "la",
+	    "description": "Mother in labor",
+            "category": "1"
+       }
+    },
+    {
+        "pk": 6,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "na",
+	    "description": "Has never received clinical antenatal care",
+            "category": "1"
+       }
+    },
+    {
+        "pk": 7,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "tw",
+	    "description": "Twins",
+            "category": "1"
+       }
+    },
+    {
+        "pk": 8,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "tr",
+	    "description": "Triplets",
+            "category": "1"
+       }
+    },
+    {
+        "pk": 9,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "bo",
+	    "description": "Male",
+            "category": "1"
+       }
+    },
+    {
+        "pk": 10,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "gi",
+	    "description": "Female",
+            "category": "1"
+       }
+    },
+    
+    {
+        "pk": 11,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "sc",
+	    "description": "Perceived serious but cause unknown",
+            "category": "3"
+       }
+    },
+    {
+        "pk": 12,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ci",
+	    "description": "Cord infection",
+            "category": "3"
+       }
+    },
+    {
+        "pk": 13,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "di",
+	    "description": "Diarrhea",
+            "category": "3"
+       }
+    },
+    {
+        "pk": 14,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ma",
+	    "description": "Malaria",
+            "category": "3"
+       }
+    },
+    {
+        "pk": 15,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "fe",
+	    "description": "Fever",
+            "category": "3"
+       }
+    },
+    {
+        "pk": 16,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "hy",
+	    "description": "Hypothermia",
+            "category": "3"
+       }
+    },
+    {
+        "pk": 17,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "rb",
+	    "description": "Rapid breathing",
+            "category": "3"
+       }
+    },
+    {
+        "pk": 18,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "pn",
+	    "description": "Pneumonia",
+            "category": "1"
+       }
+ 
+   },
+   {
+        "pk": 19,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "he",
+	    "description": "Hemorrhaging/Bleeding",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 20,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "hp",
+	    "description": "At hospital facility",
+            "category": "4"
+       }
+ 
+   },
+   {
+        "pk": 21,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "cl",
+	    "description": "At clinic facility",
+            "category": "4"
+       }
+ 
+   },
+   {
+        "pk": 22,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "or",
+	    "description": "On route",
+            "category": "4"
+       }
+ 
+   },
+   {
+        "pk": 23,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ho",
+	    "description": "At home",
+            "category": "4"
+       }
+ 
+   },
+   {
+        "pk": 24,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "child_weight",
+	    "description": "Child weight",
+            "category": "1",
+	    "has_value": true
+       }
+ 
+   },
+   {
+        "pk": 44,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "child_number",
+	    "description": "Child Number",
+            "category": "1",
+	    "has_value": true
+       }
+ 
+   },
+   {
+        "pk": 25,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "muac",
+	    "description": "MUAC",
+            "category": "1",
+	    "has_value": true
+       }
+ 
+   },   {
+        "pk": 26,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "child_length",
+	    "description": "Child length",
+            "category": "1",
+	    "has_value": true
+       }
+ 
+   },
+   {
+        "pk": 27,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "mother_weight",
+	    "description": "Mother weight",
+            "category": "1",
+	    "has_value": true
+       }
+ 
+   },
+   {
+        "pk": 28,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "vo",
+	    "description": "Vomiting",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 29,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "co",
+	    "description": "Convulsions",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 30,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "sa",
+	    "description": "Severe Anemia",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 31,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ch",
+	    "description": "Coughing",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 32,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "un",
+	    "description": "Unconscious",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 33,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "oe",
+	    "description": "Oedema",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 34,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "np",
+	    "description": "No Problem",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 35,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "fp",
+	    "description": "Flaccid Paralysis",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 36,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ns",
+	    "description": "Neck Stiffness",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 37,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "cm",
+	    "description": "Congenital Malfunction",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 38,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ja",
+	    "description": "Jaundice",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 39,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "af",
+	    "description": "Abnormal Fontanel",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 40,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "pc",
+	    "description": "Premature Contraction",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 41,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "sl",
+	    "description": "Stroke Labor",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 42,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ds",
+	    "description": "Chronic Disease",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 43,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "ps",
+	    "description": "Labor on Previous Cesarian Section",
+            "category": "3"
+       }
+ 
+   },
+   {
+        "pk": 45,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "v1",
+	    "description": "Vaccine: BCG, P0",
+            "category": "6"
+       }
+ 
+   },
+   {
+        "pk": 46,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "v2",
+	    "description": "Vaccine: P1, Penta1, PCV1",
+            "category": "6"
+       }
+ 
+   },
+   {
+        "pk": 47,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "v3",
+	    "description": "Vaccine: P2, Penta2, PCV2",
+            "category": "6"
+       }
+ 
+   },
+   {
+        "pk": 48,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "v4",
+	    "description": "Vaccine: P3, Penta3, PCV3",
+            "category": "6"
+       }
+ 
+   },
+   {
+        "pk": 49,
+        "model": "ubuzima.fieldtype",
+        "fields": {
+            "key": "v5",
+	    "description": "Vaccine: Measles",
+            "category": "6"
+       }
+ 
+   }
+]

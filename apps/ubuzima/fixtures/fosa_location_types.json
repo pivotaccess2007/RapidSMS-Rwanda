@@ -1,0 +1,45 @@
+[
+    {
+        "pk": 1,
+        "model": "locations.locationtype",
+        "fields": {
+            "name": "Province"
+         }
+    },
+    {
+        "pk": 2,
+        "model": "locations.locationtype",
+        "fields": {
+            "name": "Sector"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "locations.locationtype",
+        "fields": {
+            "name": "District"
+        }
+    },
+
+    {
+        "pk": 4,
+        "model": "locations.locationtype",
+        "fields": {
+            "name": "Hospital"
+       }
+    },
+    {
+        "pk": 5,
+        "model": "locations.locationtype",
+        "fields": {
+            "name": "Health Centre"
+       }
+    },
+    {
+        "pk": 6,
+        "model": "locations.locationtype",
+        "fields": {
+            "name": "Village"
+       }
+    }
+]

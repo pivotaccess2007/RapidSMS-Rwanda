@@ -1,0 +1,16 @@
+{% extends base_template %}
+
+{% block title %}Reports By Location{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page active"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+</ul>
+{% endblock %}
+
+
+{% block content %}
+<h2>Reports for Location: {{location.name}}</h2>
+{% include 'ubuzima/report_table.html' %} 
+{% endblock %}

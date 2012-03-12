@@ -1,0 +1,41 @@
+{% load pagination-tags %}
+
+<table width="100%"> 
+    <thead>
+	<tr><th colspan="5"></th><th><a href="/reporters/inactive/csv{%if postqn%}?{{postqn}}{%endif%}" >Export Inactive Reporters</a></th></tr>
+        <tr>
+        	<th>Id</th>
+            <th>Telephone</th>
+            <th>Alias</th>
+            <th>Location</th>
+            <th>Last Seen</th>
+            <th>Supervisors</th>
+        </tr>
+    </thead>
+    <tbody>
+    	{% for reporter in reporters.object_list %}
+            <tr>
+            	<td><a href="/reporters/{{reporter.pk}}">{{reporter.pk}}</a></td>
+                <td>{{reporter.connection.identity}}</td>
+                <td>{{reporter.alias}}</td>
+                <td><a href="/reporters/inactive/location/{{reporter.location.pk}}">{{reporter.location}}</a></td>
+                <td>{{reporter.last_seen}}</td>
+                <td>{%for sup in reporter.reporter_sups %}<a href="/reporters/inactive/sup/{{sup.pk}}">{{sup.connection.identity}}</a><br/>{%endfor%}</td>
+               
+            </tr>
+        {% endfor %}
+    </tbody>
+    
+    <tfoot>
+			<tr>
+				<td colspan="6">
+					{% paginator reporters %}
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6">
+				Matching Reporters: {{ reporters.paginator.count }}
+				</td>
+			</tr>
+	</tfoot>
+</table>

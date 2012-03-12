@@ -1,0 +1,19 @@
+[
+    {
+        "pk": 1,
+        "model": "reporters.reportergroup",
+        "fields": {
+            "title": "CHW",
+	    "description": "community health worker"
+       }
+    },
+    
+    {
+        "pk": 2,
+        "model": "reporters.reportergroup",
+        "fields": {
+            "title": "Supervisor",
+	    "description": "Supervisor at health unit"
+       }
+    }   
+]

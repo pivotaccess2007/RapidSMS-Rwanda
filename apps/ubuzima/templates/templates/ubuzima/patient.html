@@ -1,0 +1,46 @@
+{% extends base_template %}
+
+{% block title %}Reports By Patient{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page active"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+</ul>
+{% endblock %}
+
+
+{% block content %}
+<h2>Patient</h2>
+<br/>
+<b>National Id:</b> {{ patient.national_id }}<br/><br/>
+<b>Location:</b> {{ patient.location }}<br/><br/>
+
+<h2>Reminders</h2>
+<table width="100%">
+  <thead>
+    <tr>
+      <th>type</th>
+      <th>date</th>
+      <th>reporter</th>
+    </tr>
+  </thead>
+{% if reminders %}
+  {% for reminder in reminders %}
+  <tr>
+    <td>{{ reminder.type }}</td>
+    <td>{{ reminder.date|date:"d.m.Y" }}</td>
+    <td><a href="/ubuzima/reporter/{{report.reporter.pk}}">{{report.reporter.alias}}</a></td>
+  </tr>
+  {% endfor %}
+{% else %}
+  <tr>
+    <td colspan=2><center>No reminders sent yet.</center></td>
+  </tr>
+{% endif %}
+</table>
+<br/>
+
+<h2>Reports</h2>
+{% include 'ubuzima/report_table.html' %} 
+{% endblock %}

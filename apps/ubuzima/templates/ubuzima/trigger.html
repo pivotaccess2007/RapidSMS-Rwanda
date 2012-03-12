@@ -1,0 +1,33 @@
+{% extends base_template %}
+
+{% block title %}Alert{% endblock %}
+
+
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<li class="page active"><a href="/ubuzima/triggers">Triggers</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<a href="/admin/ubuzima/triggeredtext/{{trigger.pk}}">Edit</a><br/>
+
+<h1>{{trigger.name}}</h1>
+<b>Description:</b> {{ trigger.description }}<br/><br/>
+<b>Destination:</b> {{ trigger.destination }}<br/><br/>
+
+<h2>Triggers</h2>
+{% for field in trigger.triggers.all %}
+<h4>{{field.key}} - {{field.description}}</h4>
+{% endfor %}
+
+<h2>Message</h2>
+<table>
+<tr><td><b>english</b></td><td>{{trigger.message_en}}</td></tr>
+<tr><td><b>kinyarwanda</b></td><td>{{trigger.message_kw}}</td></tr>
+<tr><td><b>french</b></td><td>{{trigger.message_fr}}</td></tr>
+</table>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+[
+    {
+        "pk": 1,
+        "model": "ubuzima.remindertype",
+        "fields": {
+            "name": "2nd ANC Visit",
+            "message_en": "Reminder for patient %s, it is time for their 2nd ANC Visit",
+            "message_fr": "Reminder for patient %s, it is time for their 2nd ANC Visit",
+            "message_kw": "Reminder for patient %s, it is time for their 2nd ANC Visit"
+         }
+    },
+    {
+        "pk": 2,
+        "model": "ubuzima.remindertype",
+        "fields": {
+            "name": "3rd ANC Visit",
+            "message_en": "Reminder for patient %s, it is time for their 3rd ANC Visit",
+            "message_fr": "Reminder for patient %s, it is time for their 3rd ANC Visit",
+            "message_kw": "Reminder for patient %s, it is time for their 3rd ANC Visit"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "ubuzima.remindertype",
+        "fields": {
+            "name": "4th ANC Visit",
+            "message_en": "Reminder for patient %s, it is time for their 4th ANC Visit",
+            "message_fr": "Reminder for patient %s, it is time for their 4th ANC Visit",
+            "message_kw": "Reminder for patient %s, it is time for their 4th ANC Visit"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "ubuzima.remindertype",
+        "fields": {
+            "name": "Expected Delivery Date",
+            "message_en": "Reminder for patient %s, this patient is due to deliver soon",
+            "message_fr": "Reminder for patient %s, this patient is due to deliver soon",
+            "message_kw": "Reminder for patient %s, this patient is due to deliver soon"
+        }
+    },
+    {
+        "pk": 5,
+        "model": "ubuzima.remindertype",
+        "fields": {
+            "name": "SUP Expected Delivery Date",
+            "message_en": "Reminder for patient %s, this patient is due to deliver soon",
+            "message_fr": "Reminder for patient %s, this patient is due to deliver soon",
+            "message_kw": "Reminder for patient %s, this patient is due to deliver soon"
+        }
+    },
+    {
+        "pk": 6,
+        "model": "ubuzima.remindertype",
+        "fields": {
+            "name": "Expired Reporter",
+            "message_en": "The CHW %s with phone number %s has not sent in a report in over 30 days.",
+            "message_fr": "The CHW %s with phone number %s has not sent in a report in over 30 days.",
+            "message_kw": "The CHW %s with phone number %s has not sent in a report in over 30 days."
+        }
+    }
+]

@@ -1,0 +1,6 @@
+{% for nom in names %}
+{{ nom }}{% if not forloop.last %},{% endif %}
+{% endfor %}
+{% for row in data %}
+{%      for datapoint in row    %}{{ datapoint }}{% if not forloop.last %},{% endif %}{%      endfor datapoint  %}
+{% endfor %}

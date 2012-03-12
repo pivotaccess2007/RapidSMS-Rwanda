@@ -1,0 +1,54 @@
+{% load pagination-tags %}
+{% extends base_template %}
+{% block title %}Ambulances for {{location.name}} {{location.type.name}}{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page active"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/triggers">Triggers</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+
+<h2>Ambulance Drivers for {{location.name}} {{location.type.name}}</h2>
+<table>
+    <thead>
+    </thead>
+    <tbody>{% for driver in drivers %}
+        <tr>
+            <td>{{driver.identity}}</td><td>{{driver.car.plates}}</td><td><form method="post" action="/ubuzima/ambulances/drivers/delete"><input type="hidden" name="vers" value="{{location.id}}" /><input type="hidden" name="drv" value="{{driver.id}}" /><input type="submit" value="Remove" /></form></td>
+        </tr>{% endfor %}
+        <tr>
+            <td>{{driver.identity}}</td><td>{{driver.car.plates}}</td><td>
+                <form method="post" action="/ubuzima/ambulances/drivers/add">
+                    To add an ambulance driver for {{location.name}} {{location.type.name}}, enter the phone number below and click &ldquo;Add&rdquo;:<br />
+                    <input type="text" name="nimero" /><br />
+                    <input type="hidden" name="vers" value="{{location.id}}" />
+                    <input type="submit" value="Add" />
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Ambulances for {{location.name}} {{location.type.name}}</h2>
+<table>
+    <tbody>{% for amb in ambulances %}
+        <tr>
+            <td>{{amb.plates}}</td>
+        </tr>{% endfor %}
+        <tr>
+            <td>
+                <form method="post" action="/ubuzima/ambulances/add">
+                    To add an ambulance for {{location.name}} {{location.type.name}}, enter below (<i>e.g.</i>, registration number) and click &ldquo;Add&rdquo;:<br />
+                    <input type="text" name="nimero" /><br />
+                    <input type="hidden" name="vers" value="{{location.id}}" />
+                    <input type="submit" value="Add" />
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}

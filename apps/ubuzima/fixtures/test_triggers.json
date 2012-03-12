@@ -1,0 +1,53 @@
+[{
+        "pk": 4, 
+         "model": "ubuzima.triggeredtext", 
+         "fields": {
+         "message_fr": "Advice about ma. (fr)",      
+         "message_kw": "Advice about ma. (kw)", 
+         "name": "ma-chw", 
+         "triggers": [14], 
+         "destination": "CHW", 
+         "message_en": "Advice about ma.", 
+         "active": 1, 
+         "description": "test"
+         }
+  }, {
+        "pk": 5, 
+        "model": "ubuzima.triggeredtext", 
+        "fields": {
+        "message_fr": "Alert to sup about ma (fr)", 
+        "message_kw": "Alert to sup about ma (kw)", 
+        "name": "sup-ma", 
+        "triggers": [14], 
+        "destination": "SUP", 
+        "message_en": "Alert to sup about ma", 
+        "active": 1, 
+        "description": "test"
+        }
+  }, {
+        "pk": 6, 
+        "model": "ubuzima.triggeredtext", 
+        "fields": {
+        "message_fr": "Alert to supervisor about ma-he (fr)", 
+        "message_kw": "Alert to supervisor about ma-he (kw)", 
+        "message_en": "Alert to supervisor about ma-he", 
+        "name": "sup-ma-he", 
+        "triggers": [14, 19], 
+        "destination": "SUP", 
+        "active": 1, 
+        "description": "test"
+        }
+   }, {
+        "pk": 7, 
+        "model": "ubuzima.triggeredtext", 
+        "fields": {
+        "message_fr": "Alert to district supervisor about he (fr)", 
+        "message_kw": "Alert to district supervisor about he (kw)", 
+        "message_en": "Alert to district supervisor about he", 
+        "name": "dist-sup-he", 
+        "triggers": [19], 
+        "destination": "DIS", 
+        "active": 1, 
+        "description": "test"
+   }
+}]

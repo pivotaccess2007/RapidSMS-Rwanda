@@ -1,0 +1,135 @@
+{% extends base_template %}
+{% load pagination-tags %}
+{% block title %}Error Log{% endblock %}
+{% block javascripts %}
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.pie.pack.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/jquery.datepick.min.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/stats.js"></script>
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/jquery.datepick.css" />
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/stats.css" />
+
+<script type="text/javascript"> 
+
+
+function deroulement(form)
+  {
+	path=document.URL	
+
+if ((form.province.value=="") || (form.district.value=="") || (form.location.value==""))
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			window.location=path;
+			}
+       }
+
+else {
+	form.submit();	
+	}
+
+ }
+
+
+</script>
+
+{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/reporters/active">Active Reporters</a></li>
+	<li class="page"><a href="/reporters/inactive">Inactive</a></li>
+	<li class="page"><a href="/reporters/errors">Error Log</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+{% load reporters-tags %}
+
+<div>
+    <form class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                <tr><th colspan="2">Period</th><th>Location</th><th></th><th></th><th></th></tr>
+                <tr><th>Start</th><th>End</th><th>Province</th><th>District</th><th>Health
+                        Centre</th><th></th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+            <input type="text" id="pickstartdate" value="{{ start_date }}"
+            name="start_date" readonly="readonly" size="10" /></td>
+        <td><input type="text" id="pickenddate" value="{{ end_date }}"
+            name="end_date" readonly="readonly" size="10" />
+                    </td>
+                    <td>
+            <select name="province" id="provchoose"><option></option>
+                {%  for loc in filters.province %}<option value="{{ loc.id }}" {% if loc.selected and request.GET.province %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="district" id="distchoose"><option></option>
+                {%  for loc in filters.district %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.district %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="location" id="locchoose"><option></option>
+                {%  for loc in filters.location %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.location %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <input type="button" value="Update Filters"  onClick="return deroulement(this.form);"/>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    <div class="clear-hack"></div>
+</div>
+<h2>All Errors {%if not request.GET.province and not request.GET.district and not request.GET.location %}<p style=" text-align:center; ">Nation Wide, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%else%}<p style=" text-align:center; ">{{locationname}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%endif%}</h2>
+<div > <table width="100%"><tr><td width="100%"><div align="right"><a href="/reporters/errors/csv{%if postqn%}?{{postqn}}{%endif%}"> Exports Error logs</a></div></td></tr>
+<tr><td width="100%">&nbsp;</td></tr>
+</table>			
+</div>
+	<table width="100%">
+		<thead>
+			
+			<tr>
+				<th scope="col">Reporter</th>
+				<th scope="col">Message</th>
+				<th scope="col">Location</th>
+				<th scope="col">Sent on &#133;</th>
+			</tr>
+			
+		</thead>
+		<tbody>{% if errors.object_list %}{% for error in errors.object_list %}
+			<tr>
+                <td><a href="/reporters/{{ error.errby.pk }}">{{error.errby.connection.identity}}</a></td>
+                <td>{{error.errmsg}}</td>
+		<td><a href="/reporters/errors/location/{{ error.errby.location.pk }}">{{error.errby.location}}</a></td>
+                <td>{{error.created}}</td>
+			</tr>{% endfor %}{% else %}
+			<tr class="no-data">
+				<td colspan="3">
+					No errors. Yet.
+				</td>
+			</tr>{% endif %}
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="3">
+					{% paginator errors %}
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+{% endblock %}

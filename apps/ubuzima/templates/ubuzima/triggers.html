@@ -1,0 +1,38 @@
+{% extends base_template %}
+
+{% block title %}Triggers{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<li class="page active"><a href="/ubuzima/triggers">Triggers</a></li>
+    <li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<a class="addlink" href="/admin/ubuzima/triggeredtext/add">Add Trigger</a><br/><br/> 
+
+<h2>Triggers</h2>
+<table width="100%"> 
+    <thead>
+        <tr>
+            <th width='100'>Name</th>
+            <th>Destination</th>
+            <th>Triggers</th>
+            <th>Message</th>
+        </tr>
+    </thead>
+    <tbody>
+    	{% for trigger in triggers.object_list %}
+            <tr>
+            	<td><a href="/ubuzima/trigger/{{trigger.pk}}">{{trigger.name}}</a></td>
+                <td>{{ trigger.destination }} </td>
+                <td>{{trigger.trigger_summary}}</td>
+                <td>{{trigger.message_en}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

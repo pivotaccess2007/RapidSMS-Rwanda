@@ -1,0 +1,30 @@
+{% extends base_template %}
+
+{% block title %}Alert{% endblock %}
+
+
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<li class="page active"><a href="/ubuzima/advices">Advice Texts</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<h1>{{alert.name}}</h1>
+<a href="/admin/ubuzima/advicetext/{{advice.pk}}">Edit</a><br/>
+
+<h2>Triggers</h2>
+{% for trigger in advice.triggers.all %}
+<h4>{{trigger.key}} - {{trigger.description}}</h4>
+{% endfor %}
+
+<h2>Advice Texts</h2>
+<table>
+<tr><td>english</td><td>{{advice.message_en}}</td></tr>
+<tr><td>kinyarwanda</td><td>{{advice.message_kw}}</td></tr>
+<tr><td>french</td><td>{{advice.message_fr}}</td></tr>
+</table>
+
+{% endblock %}

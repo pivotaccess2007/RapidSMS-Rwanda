@@ -1,0 +1,141 @@
+{% extends base_template %}
+{% block title %}{{stattitle}}{% endblock %}
+{% block javascripts %}
+
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.pie.pack.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/jquery.datepick.min.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/stats.js"></script>
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/jquery.datepick.css" />
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/stats.css" />
+
+<script type="text/javascript"> 
+
+
+function deroulement(form)
+  {
+	path=document.URL	
+
+if ((form.province.value=="") || (form.district.value=="") || (form.location.value==""))
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			window.location=path;
+			}
+       }
+
+else {
+	form.submit();	
+	}
+
+ }
+
+
+</script>
+
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/stats.css" />
+{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<!--<li class="page"><a href="/ubuzima/triggers">Triggers</a></li> -->
+	<li class="page active"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% load pagination-tags %}
+
+{% block content %}
+<h2>{{stattitle}}{%if not request.GET.province and not request.GET.district and not request.GET.location %}<p style=" text-align:center; ">Nation Wide, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%else%}<p style=" text-align:center; ">{{locationname}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%endif%}<div align="right"><a href="/ubuzima/stats{%if postqn%}?{{postqn}}{%endif%}"> <img src="/static/webapp/icons/silk/decline.png"  border="0"></a></div></h2>
+
+<div>&nbsp;
+    <form class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                <tr><th colspan="2">Period</th><th>Location</th><th></th><th></th><th></th></tr>
+                <tr><th>Start</th><th>End</th><th>Province</th><th>District</th><th>Health
+                        Centre</th><th></th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+            <input type="text" id="pickstartdate" value="{{ start_date }}"
+            name="start_date" readonly="readonly" size="10" /></td>
+        <td><input type="text" id="pickenddate" value="{{ end_date }}"
+            name="end_date" readonly="readonly" size="10" />
+                    </td>
+                    <td>
+            <select name="province" id="provchoose"><option></option>
+                {%  for loc in filters.province %}<option value="{{ loc.id }}" {% if loc.selected and request.GET.province %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="district" id="distchoose"><option></option>
+                {%  for loc in filters.district %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.district %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="location" id="locchoose"><option></option>
+                {%  for loc in filters.location %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.location %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <input type="button" value="Update Filters"  onClick="return deroulement(this.form);"/>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    <div class="clear-hack"></div>
+
+</div>
+
+<table width="100%">
+    <thead>
+		
+	<tr><td colspan="7">&nbsp;</td></tr>
+        <tr>
+            <th>Report ID</th>
+            <th>Reporter Identity</th>
+            <th>Location</th>
+            <th>Patient</th>
+            <th>Expected Due Date</th>
+	   <!-- <th>Received At</th>-->
+	    <th>Report Details</th>
+	    <th>Supervisors</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%for pt in reports.object_list %}
+        <tr>
+            <td{%if pt.is_risky %} class="lagging"{%endif%}><a href="/ubuzima/report/{{pt.id}}">{{pt.id}}</a></td>
+            <td><a href="/ubuzima/reporter/{{pt.reporter.id}}">{{pt.reporter.connection.identity}}</a></td>
+            <td><a href="/ubuzima/location/{{pt.location.id}}">{{pt.location}}</a></td>
+            <td><a href="/ubuzima/patient/{{pt.patient.id}}">{{pt.patient}}</a></td>
+            <td>{{pt.show_edd}}</td>
+	    <!--<td>{{pt.date}}</td>-->
+		<td>{{pt.summary}}</td>
+		<td>{%for sup in pt.reporter.reporter_sups %}{{sup.connection.identity}}<br/>{%endfor%}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="7">{% paginator reports %}</td>
+        </tr>
+        <tr>
+            <td colspan="7">Matching Reports: {{ reports.paginator.count }}</td>
+        </tr>
+    </tfoot>
+</table>
+{% endblock %}

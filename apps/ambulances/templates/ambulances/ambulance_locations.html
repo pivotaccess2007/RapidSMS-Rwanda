@@ -1,0 +1,62 @@
+{% extends base_template %}
+{% load pagination-tags %}
+{% block title %}Ambulances for {{location.name}} {{location.type.name}}{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+</ul>
+{% endblock %}
+
+{% block content %}
+
+<h2>Ambulance Drivers for {{location.name}} {{location.type.name}}</h2>
+<table>
+    <thead>
+		<th>Name</th>
+		<th>National ID</th>
+		<th>Telephone number</th>
+		<th></th>
+    </thead>
+    <tbody>{% for driver in drivers %}
+        <tr>
+            <td>{{driver.name}}</td><td>{{driver.identity}}</td><td>{{driver.phonenumber}}</td><td><form method="post" action="/ambulances/driver/delete"><input type="hidden" name="vers" value="{{location.id}}" /><input type="hidden" name="drv" value="{{driver.id}}" /><input type="submit" value="Remove" /></form></td>
+        </tr>{% endfor %}
+        <tr>
+            <td colspan="4">
+                <form method="post" action="/ambulances/driver/add">
+                    To add an ambulance driver for {{location.name}} {{location.type.name}}, enter the driver&rsquo;s details below and click &ldquo;Add&rdquo;:<br />
+					Driver Name:<br />
+					<input type="text" name="nom" /><br /><br />
+					National ID:<br />
+					<input type="text" name="natid" /><br /><br />
+					Phone Number:<br />
+					<input type="text" name="nimero" /><br /><br />
+					<br />
+                    <input type="hidden" name="vers" value="{{location.id}}" />
+                    <input type="submit" value="Add" />
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+{% comment %}
+<h2>Ambulances for {{location.name}} {{location.type.name}}</h2>
+<table>
+    <tbody>{% for amb in ambulances %}
+        <tr>
+            <td>{{amb.plates}}</td>
+        </tr>{% endfor %}
+        <tr>
+            <td>
+                <form method="post" action="/ambulances/add">
+                    To add an ambulance for {{location.name}} {{location.type.name}}, enter its identification below (<i>e.g.</i>, registration number) and click &ldquo;Add&rdquo;:<br />
+                    <input type="text" name="nimero" /><br />
+                    <input type="hidden" name="vers" value="{{location.id}}" />
+                    <input type="submit" value="Add" />
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+{% endcomment %}
+{% endblock %}

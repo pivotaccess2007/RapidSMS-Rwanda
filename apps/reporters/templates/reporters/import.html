@@ -1,0 +1,15 @@
+{% extends base_template %}
+
+{% block title %} Import Reporters {% endblock %}
+{% block content %}
+<div><font color=red>{{error}}</font></div>
+<div class="module">
+{% if form.errors %}
+<p>{{ form.errors }}</p>
+{% endif %}
+<form enctype="multipart/form-data" action="{% url import_start %}" method="POST">
+{{ form.as_p }}
+<input type="submit" value="Submit" />
+</form>
+<div>
+{% endblock %}

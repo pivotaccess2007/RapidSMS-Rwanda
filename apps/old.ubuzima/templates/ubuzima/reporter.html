@@ -1,0 +1,15 @@
+{% extends base_template %}
+{% block title %}Report by Reporter{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page active"><a href="/ubuzima">Reports</a></li>
+	<li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+</ul>
+{% endblock %}
+
+
+{% block content %}
+<h2>Reports by {{reporter.alias}}</h2> 
+{% include 'ubuzima/report_table.html' %} 
+{% endblock %}

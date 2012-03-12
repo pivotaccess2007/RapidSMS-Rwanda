@@ -1,0 +1,35 @@
+{% extends base_template %}
+
+{% block title %}Alerts{% endblock %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima">Reports</a></li>
+	<li class="page active"><a href="/ubuzima/advices">Advice Texts</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<a class="addlink" href="/admin/ubuzima/advicetext/add">Add Advice Text</a><br/> 
+
+<h2>Advice Texts</h2>
+<table width="100%"> 
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Triggers</th>
+            <th>Message</th>
+        </tr>
+    </thead>
+    <tbody>
+    	{% for advice in advices.object_list %}
+            <tr>
+            	<td><a href="/ubuzima/advice/{{advice.pk}}">{{advice.name}}</a></td>
+                <td>{{advice.trigger_summary}}</td>
+                <td>{{advice.message_en}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

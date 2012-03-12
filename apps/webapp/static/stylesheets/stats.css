@@ -1,0 +1,34 @@
+.bighead
+{
+    font-size: x-large;
+}
+
+.smallhead
+{
+    font-size: large;
+}
+
+#pickstartdate
+{
+    text-align: right;
+}
+
+.lagging
+{
+    background: #ff8989;
+    font-weight: bolder;
+}
+
+.maptd
+{
+    text-align:center;
+}
+
+.tmp table
+{
+}
+
+.hindics, .goals, .thereps
+{
+    width: 98%;
+}

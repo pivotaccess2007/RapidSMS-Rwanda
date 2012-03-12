@@ -1,0 +1,178 @@
+{% extends "layout.html" %}
+{% block title %}Aggregated Statistics {%if locationname%}({{locationname}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}){%endif%}{% endblock %}
+{% block javascripts %}
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.pie.pack.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/jquery.datepick.min.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/stats.js"></script>
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/jquery.datepick.css" />
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/stats.css" />
+<!--[if IE]><script type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css"
+href="/static/webapp/javascripts/extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="/static/webapp/javascripts/extjs/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/extjs/ext-all-debug.js"></script>
+
+
+<script type="text/javascript"> 
+
+
+function deroulement(form)
+  {
+	path=document.URL	
+
+if ((form.province.value=="") || (form.district.value=="") || (form.location.value==""))
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			window.location=path;
+			}
+       }
+
+else {
+	form.submit();	
+	}
+
+ }
+
+
+</script>
+
+
+{% endblock %}
+{% load cache %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+    <li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+    <li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+    <li class="page active"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% load pagination-tags %}
+
+{% block content %}
+{% cache 3600 agstats %}
+
+<div class="tmp">
+
+
+<div>
+    <form class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                <tr><th colspan="2">Period</th><th>Location</th><th></th><th></th><th></th></tr>
+                <tr><th>Start</th><th>End</th><th>Province</th><th>District</th><th>Health
+                        Centre</th><th></th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+            <input type="text" id="pickstartdate" value="{{ start_date }}"
+            name="start_date" readonly="readonly" size="10" /></td>
+        <td><input type="text" id="pickenddate" value="{{ end_date }}"
+            name="end_date" readonly="readonly" size="10" />
+                    </td>
+                    <td>
+            <select name="province" id="provchoose"><option></option>
+                {%  for loc in filters.province %}<option value="{{ loc.id }}" {% if loc.selected and request.GET.province %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="district" id="distchoose"><option></option>
+                {%  for loc in filters.district %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.district %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="location" id="locchoose"><option></option>
+                {%  for loc in filters.location %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.location %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <input type="button" value="Update Filters" onClick="return deroulement(this.form);" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    <div class="clear-hack"></div>
+</div>
+    <h2>At a Glance {%if not request.GET.province and not request.GET.district and not request.GET.location %}<p style=" text-align:center; ">{{usrloc.location}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%else%}<p style=" text-align:center; ">{{locationname}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%endif%}</h2>
+    <table width="100%">
+        <thead>
+            <tr><th>Province</th><th>District</th><th>Health Centre</th>
+                <th>Birth</th>
+                <th>Pregnancy</th>
+		<th>ANC</th>
+                <th>Child Health</th>
+                <th>Maternal Risk</th>
+		<th>Child Death</th>
+		<th>Maternal Death</th>
+		<th>New Born Death</th>
+		<th><b>Total</b></th>
+            </tr>
+        </thead>
+        <tbody>
+            
+	{%for stat in track.object_list%}
+	<tr><td>{{stat.prv}}</td><td>{{stat.dst}}</td><td>{{stat.hc}}</td><td>{{stat.birth}}</td><td>{{stat.pregnancy}}</td><td>{{stat.anc}}</td><td>{{stat.chihe}}</td><td>{{stat.risk}}</td><td>{{stat.chideaths}}</td><td>{{stat.matdeaths}}</td><td>{{stat.newbdeaths}}</td><td><b>{{stat.tot}}</b></td></tr>
+	{%endfor%}
+        </tbody>
+        <tfoot>
+            <tr>
+				<td colspan="12">
+					{% paginator track %}
+				</td>
+			</tr>
+			<tr>
+				<td colspan="12">
+				Statistics: {{ track.paginator.count }}
+				</td>
+			</tr>
+        </tfoot>
+    </table>
+    
+<div>
+    <!--
+    <div>
+        <table class="hindics" width="100%">
+            <thead>
+                <tr class="smallhead"><th colspan="3">RapidSMS Data</th></tr>
+                <tr><th>Description</th><th>Rate</th><th></th></tr>
+            </thead>
+            <tbody>
+                {# for hind in hindics.object_list #}
+                <tr><td><a
+                        href="indicator/{#hind.id#}/html?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">{#hind.proper_name#}</a></td><td>{#hind.instances_count#}</td><td>[<a
+                        href="indicator/{#hind.id#}/csv?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">export</a>]</td></tr>
+                {# endfor #}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">{# paginator hindics #}</td>
+                </tr>
+                <tr>
+                    <td colspan="3">Matching Reports: {# hindics.paginator.count #}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    -->
+	<div class="clear-hack"></div>
+</div>
+
+
+</div>
+{% endcache %}
+{% endblock %}
