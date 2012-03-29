@@ -1240,7 +1240,7 @@ def view_stats(req, **flts):
     if req.REQUEST.has_key('location') and req.REQUEST['location'] != '0':
         lox = int(req.REQUEST['location'])
         lxn = Location.objects.get(id = lox)
-    return render_to_response(req, 'ubuzima/stats.html',
+    return render_to_response(req, 'ubuzima/stats_test.html',
            {'track':track, 'filters':filters,'usrloc':UserLocation.objects.get(user=req.user),
           'hindics':paginated(req, hindics, prefix = 'hind'),
        'start_date':date.strftime(filters['period']['start'], '%d.%m.%Y'),

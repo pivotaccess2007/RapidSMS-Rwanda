@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% load pagination-tags %}
+{% block title %}Save docs{% endblock %}
+
+{% block content %}
+      <form enctype="multipart/form-data" action="/doc/" method="post">{% csrf_token %}
+          <div class="form_settings">
+            <p>Name of a document :<input class="contact" type="text" name="name_doc" value="" /></p>
+               <p>Small Description : <br/><textarea class="contact textarea" rows="8" cols="50" name="doc_descr"></textarea></p>
+             
+            <p>Upload here:<input class="contact" type="file" name="document" /></p>
+            <p><span>&nbsp;</span><input class="submit" type="submit" name="reg_submitted" value="submit" /></p>
+          </div>
+        </form>
+ 
+{% endblock %}
+

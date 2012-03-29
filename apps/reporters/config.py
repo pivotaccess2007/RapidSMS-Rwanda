@@ -3,3 +3,5 @@
 
 title = "Reporters and Groups"
 tab_link = "/reporters"
+sub_tab = ["Active Reporters","Inactive","Error Log"]
+sub_tab_link = {"Active Reporters":"/reporters/active","Inactive":"/reporters/inactive","Error Log":"/reporters/errors"}

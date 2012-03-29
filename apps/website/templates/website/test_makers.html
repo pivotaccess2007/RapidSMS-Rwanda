@@ -1,0 +1,47 @@
+{% extends "index.html" %}
+
+ {% block content %}
+
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true" type="text/javascript"></script>
+	
+    <script type="text/javascript">
+    
+    function initialize() {
+      if (GBrowserIsCompatible()) {
+
+        function createMarker(point,html) {
+           var marker = new GMarker(point);
+           GEvent.addListener(marker, "click", function() {
+              marker.openInfoWindowHtml(html);
+           });
+           return marker;
+        }
+
+           // Display the map, with some controls and set the initial location 
+           var map = new GMap2(document.getElementById("map"));
+           map.addControl(new GSmallMapControl());
+           map.setCenter(new GLatLng(-1.9,29.9),8);
+    
+
+        {% for event in test %}
+
+            var point = new GLatLng("{{ event.latitude }}","{{ event.longitude }}");
+            var marker = createMarker(point,' <div><strong><font size="4" face="verdana">Location name: {{ event.name }}<\/strong> <\/br><\/br><strong>Location code: {{ event.code }}<\/font><\/strong> <\/div> ')
+            map.addOverlay(marker);
+		    
+		
+        {% endfor %}
+
+           
+        mapTypeId: google.maps.MapTypeId.ROADMAP;
+      }
+    }
+
+    </script>
+  </head>
+  <body onload="initialize()" onunload="GUnload()">
+    <div id="map" style="width: 450px; height: 400px"></div>
+  </body>
+ 
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% load i18n %}
+{% extends "layout.html" %}
+{% block title %}Test web2{% endblock %}
+
+{% load cache %}
+{% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+	<li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+{% block content %}
+Thanks
+{% endblock %}

@@ -3,3 +3,5 @@
 
 title = "Child & Maternity Health"
 tab_link = "/ubuzima"
+sub_tab = ["Reminder","Alerts","Statistics"]
+sub_tab_link = {"Reminder":"/ubuzima/reminders","Alerts":"/ubuzima/alerts","Statistics":"/ubuzima/stats"}

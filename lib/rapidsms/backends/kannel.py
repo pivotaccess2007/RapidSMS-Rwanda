@@ -119,10 +119,8 @@ class KannelHTTPHandler(BaseHTTPRequestHandler):
             
             url = urlparse.urlparse(self.path)
             params = query_string_to_dict(url.query)
-            print "url : " + url
-            
+                    
             # build the message
-            #	sender_id   = _plus(match.group(1))
             sender_id   = _plus(match.group(1))
             input = match.group(2)
             if 'charset' in params and params['charset'].lower() == 'utf-8':
@@ -141,8 +139,7 @@ class KannelHTTPHandler(BaseHTTPRequestHandler):
                 text,
                 date=received
                 )
-            
-            
+
             # send the message to router
             self.server.backend.route(msg)
 

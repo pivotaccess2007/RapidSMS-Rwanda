@@ -5,6 +5,7 @@ from django.conf.urls.defaults import *
 import webapp.views as views
 
 urlpatterns = patterns('',
+    (r'^tracking/', include('tracking.urls')),
     url(r'^$',     views.dashboard),
     url(r'^ping$', views.check_availability),
     (r'^accounts/login/$', "webapp.views.login"),

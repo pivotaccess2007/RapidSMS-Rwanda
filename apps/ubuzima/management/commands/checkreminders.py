@@ -19,7 +19,7 @@ class Command(BaseCommand):
         )
 
     def send_message(self, connection, message):
-        conf = {'kannel_host':'', 'kannel_port':, 'kannel_password':'', 'kannel_username':''}
+        conf = {'kannel_host':'127.0.0.1', 'kannel_port':13013, 'kannel_password':'kannel', 'kannel_username':'kannel'}
         try:
             conf = settings.RAPIDSMS_APPS["kannel"]
         except KeyError:

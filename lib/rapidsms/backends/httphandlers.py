@@ -5,7 +5,11 @@ import BaseHTTPServer
 import random
 import re
 import urllib
+
+from urlparse import urlparse, parse_qs
 from datetime import datetime
+from rapidsms.connection import Connection
+from rapidsms.message import Message
 
 def _uni(str):
     """
@@ -66,12 +70,45 @@ class HttpHandler(RapidBaseHttpHandler):
         
         # if the path is of the form /integer/blah 
         # send a new message from integer with content blah
-        send_regex = re.compile(r"^/(\d+)/(.*)")
+        send_regex = re.compile(r"^/(.*?)/(.*)")
         match = send_regex.match(self.path)
         if match:
+            # parse the url
+            parsed = urlparse(self.path)
+
+            # use our default backend by default
+            backend = self.server.backend
+
+            # whether we are incoming or outgoing, be default we are incoming
+            incoming = True
+
+            # if there is a query string
+            if parsed.query:
+                # see if there is a different backend specified
+                query_string = parse_qs(parsed.query)
+
+                # if so, try to look it up
+                if 'backend' in query_string:
+                    backend = self.server.backend._router.get_backend(query_string['backend'][0])
+                    if not backend:
+                        self.send_response(404)
+                        self.send_header("Content-type", "text/html")
+                        self.end_headers()
+                        self.wfile.write("No backend with slug: %s found." % query_string['backend'][0])
+                        return
+
+
+                # is this actually an outgoing message?
+                if 'direction' in query_string:
+                    if query_string['direction'][0].lower() == 'out':
+                        incoming = False
+
+            # parse the groups out
+            match = send_regex.match(parsed.path)
+
             # send the message
-            session_id = match.group(1)
-            text = _str(match.group(2))
+            session_id = urllib.unquote(str(match.group(1)))
+            text = urllib.unquote(_str(match.group(2)))
             
             if text == "json_resp":
                 self.send_response(200)
@@ -87,14 +124,17 @@ class HttpHandler(RapidBaseHttpHandler):
             received = datetime.utcnow()
             # leave Naive!
             # received.replace(tzinfo=pytz.utc)
-            
-            msg = self.server.backend.message(
-                session_id, 
-                urllib.unquote(text),
-                date=received
-                )
+            c = Connection(backend, session_id)
+            msg = Message(connection=c, 
+                          text=text,
+                          date=received)              
 
-            self.server.backend.route(msg)
+            # inny or outy?
+            if incoming:
+                backend.route(msg)
+            else:
+                backend._router.outgoing(msg)
+
             # respond with the number and text 
             self.send_response(200)
             self.send_header("Content-type", "text/html")

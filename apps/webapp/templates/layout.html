@@ -5,6 +5,8 @@
 
 {% load webapp-tags %}
 
+{% load tracking_tags %}
+
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 	<head>
 		<title>{% block title %}{% endblock %}{% block title_suffix %} - RapidSMS{% endblock %}</title>
@@ -44,11 +46,18 @@
                                         {% ifhasperm user app "can_view" %}
 					<li class="app-{{ app.type }}{% ifequal active_tab app.type %} active{% endifequal %}">
 						<a href="{{ app.tab_link }}"><span>{{ app.title }}</span></a>
+                                                {% if app.sub_tab %}
+                                                   <ul>{% for key,value in app.sub_tab_link.items %}
+                                                       <li><a href="{{ value }}"><span>{{ key }}</span></a></li>
+                                                       {% endfor %}
+                                                   </ul>
+                                                {% endif %}
 					</li>{% endifhasperm %}{% endif %}{% endfor %}
 				</ul>
-				{% block page_tabs %}
-				{% endblock %}
-			
+				<!-- block page_tabs %}
+				{% endblock  -->
+
+	
 			</div>
 			{%if request.session.track%}<div> <!-- HTML codes by Quackit.com --><style type="text/css">
 .html-marquee {font-family:Cursive;font-size:10pt;color:#33CCCC;font-weight:bold}
@@ -88,6 +97,18 @@
 			{% endif %}
 			
 			<div id="footer">
+                            
+                                {% visitors_on_site as visitors %}
+                                <p>
+                                    {{ visitors }} active user{{ visitors|pluralize }}
+                                </p>
+                            
+                            {% visitors_on_page as same_page %}
+                                 <p>
+                                  {{ same_page }} of {{ visitors }} active user{{ visitors|pluralize }}
+                                  {% ifequal same_page 1 %}is{% else %}are{% endifequal %} reading this page
+                                 </p>
+ 
 				<p class="rights">
 					Copyright &copy; 2009 <a href="http://unicefinnovation.org">UNICEF</a> et al.<br />
 					<a href="http://github.com/unicefinnovation/rapidsms">RapidSMS</a> is free software,

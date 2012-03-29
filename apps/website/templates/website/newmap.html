@@ -1,0 +1,173 @@
+{% extends "index.html" %}
+
+ {% block content %}
+
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true" type="text/javascript"></script>
+	
+    <script type="text/javascript">
+    
+    function initialize() {
+      if (GBrowserIsCompatible()) {
+
+        function createMarker(point,html) {
+           var marker = new GMarker(point);
+           GEvent.addListener(marker, "click", function() {
+              marker.openInfoWindowHtml(html);
+           });
+           return marker;
+        }
+
+           // Display the map, with some controls and set the initial location 
+           var map = new GMap2(document.getElementById("map"));
+           map.addControl(new GSmallMapControl());
+           map.setCenter(new GLatLng(-1.9,29.9),8);
+    
+
+        {% for event in test %}
+
+            var point = new GLatLng("{{ event.latitude }}","{{ event.longitude }}");
+            var marker = createMarker(point,"{{ event.name }}")
+            map.addOverlay(marker);
+		    
+		
+        {% endfor %}
+
+           
+        mapTypeId: google.maps.MapTypeId.ROADMAP;
+      }
+    }
+
+    </script>
+  </head>
+  <body onload="initialize()" onunload="GUnload()">
+    <div id="map" style="width: 450px; height: 400px"></div>
+  </body>
+ 
+
+{% endblock %}
+
+
+<!-- ibi ni code zo gukora tab.
+<!--
+// Create an array that will hold the tabs
+var tabs = [];
+// Create tabs and add them to the array
+tabs.push(new GInfoWindowTab('Tab 1', 'Content of tab 1'));
+tabs.push(new GInfoWindowTab('Tab 2', 'Content of tab 2'));
+// Add tabs to the InfowWindow
+marker.openInfoWindowTabsHtml(tabs);
+
+
+// for loop test.
+
+{% for event in test %}
+		    
+			
+		    marker = new GMarker(new GLatLng("{{ event.latitude }}","{{ event.longitude }}"))
+            // Adding a click-event to the marker
+            GEvent.addListener(marker, 'click', function() {
+			
+			//eval("var infowindow"+ind+" = new  google.maps.InfoWindow({content: {{ event.name }}});");
+            //eval("infowindow"+i).open(map,  eval("companyMarker"+ind));
+			
+		    content = document.createElement('div');
+		
+            // When clicked, open an Info Window
+            marker.openInfoWindowHtml("{{ event.name }}",{maxWidth: '200'});
+		
+		
+            });
+             // Add marker to map
+            map.addOverlay(marker);
+			
+			i=i+1;
+		
+		{% endfor %}
+
+
+========================================
+
+ function initialize() {
+      if (GBrowserIsCompatible()) {
+        // Init a new map
+        var map = new GMap2(document.getElementById('map'));
+        map.addControl(new GSmallMapControl());
+        map.setCenter(new GLatLng(-1.9,29.9), 8);
+        
+       // Creating a new marker
+        var marker = new GMarker(new GLatLng(-1.9,29.9))
+        // Adding a click-event to the marker
+        GEvent.addListener(marker, 'click', function() {
+           // When clicked, open an Info Window
+           marker.openInfoWindowHtml('Some text');
+        });
+        // Add marker to map
+        map.addOverlay(marker); 
+
+       var marker2 = new GMarker(new GLatLng(-1.75,29.9))
+        // Adding a click-event to the marker
+        GEvent.addListener(marker2, 'click', function() {
+           // When clicked, open an Info Window
+           marker2.openInfoWindowHtml('amazing');
+        });
+        // Add marker to map
+        map.addOverlay(marker2);
+
+
+
+
+        mapTypeId: google.maps.MapTypeId.ROADMAP;
+      }
+    }
+
+===================================================
+
+{% for event in test %}
+		    
+			
+            var marker[i] = new GMarker(new GLatLng("{{ event.latitude }}","{{ event.longitude }}"))
+            // Adding a click-event to the marker
+            GEvent.addListener(marker[i], 'click', function() {		
+               // When clicked, open an Info Window
+               marker[i].openInfoWindowHtml("{{ event.name }}",{maxWidth: '200'});
+            });
+             // Add marker to map
+            map.addOverlay(marker[i]);
+			
+	    i=i+1;
+		
+        {% endfor %}
+
+
+==================================================
+
+function createMarker(point,html) {
+        var marker = new GMarker(point);
+        GEvent.addListener(marker, "click", function() {
+          marker.openInfoWindowHtml(html);
+        });
+        return marker;
+      }
+
+      // Display the map, with some controls and set the initial location 
+      var map = new GMap2(document.getElementById("map"));
+      map.addControl(new GLargeMapControl());
+      map.addControl(new GMapTypeControl());
+      map.setCenter(new GLatLng(43.907787,-79.359741),8);
+    
+      // Set up three markers with info windows 
+    
+      var point = new GLatLng(43.65654,-79.90138);
+      var marker = createMarker(point,'<div style="width:240px">Some stuff to display in the First Info Window. With a <a href="http://www.econym.demon.co.uk">Link<\/a> to my home page<\/div>')
+      map.addOverlay(marker);
+
+      var point = new GLatLng(43.91892,-78.89231);
+      var marker = createMarker(point,'Some stuff to display in the<br>Second Info Window')
+      map.addOverlay(marker);
+
+      var point = new GLatLng(43.82589,-79.10040);
+      var marker = createMarker(point,'Some stuff to display in the<br>Third Info Window')
+      map.addOverlay(marker);
+
+    
+-->

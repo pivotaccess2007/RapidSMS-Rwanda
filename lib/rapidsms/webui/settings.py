@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
+
+
 import os, time
 import i18n
 
 
 DEBUG = False
-TEMPLATE_DEBUG = False
+TEMPLATE_DEBUG = DEBUG
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -15,8 +17,7 @@ MANAGERS = ADMINS
 # default to the system's timezone settings. this can still be
 # overridden in rapidsms.ini [django], by providing one of:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-#	TIME_ZONE = time.tzname[0]
-TIME_ZONE = 'Africa/Kigali'
+TIME_ZONE = time.tzname[0]
 
 
 # Language code for this installation. All choices can be found here:
@@ -39,7 +40,7 @@ MEDIA_ROOT = ''
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/'
+MEDIA_URL = ''
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -176,5 +177,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
-    'django.contrib.admindocs'
+    'django.contrib.admindocs',
+
 ] + [app["module"] for app in RAPIDSMS_APPS.values()]

@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% load pagination-tags %}
+{% block title %}List docs{% endblock %}
+
+{% block content %}
+
+ {% if docs %}
+            
+            <p>
+            {% for item in docs %}
+              <br/>
+              <strong>{{ item.name }}</strong><br/>
+              <a href="{{ item.document_name.url }}" target="_blank"></a>
+              <a href="{{ item.document_name.url }}" target="_blank">Download here &nbsp;&nbsp;&nbsp;<input type="image" src="/static/webapp/images/down2.png" alt="Download {{ item.name }}" onClick="window.location.href='{{ item.document_name.url }}'" height="42" width="42" /></a><br/>
+              {{ item.description }}<br/>
+            
+            {% endfor %}
+            </p>
+           
+ {% endif %}
+
+
+
+<br/>
+<form action="/upload/" method="get">
+ <p><input class="submit" type="submit" name="reg_submitted" value="Upload a new document" /></p>
+</form>
+
+{% endblock %}

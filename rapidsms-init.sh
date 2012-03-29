@@ -31,15 +31,15 @@ WHERE_AM_I=`dirname $ME`
 
 ############### EDIT ME ##################
 NAME="ubuzima" # change to your project name
-DAEMON=$WHERE_AM_I/
+DAEMON=$WHERE_AM_I/rapidsms
 DAEMON_OPTS=""
-RUN_AS=
+RUN_AS=root
 APP_PATH=$WHERE_AM_I
-ROUTER_PID_FILE=//${NAME}_router.pid
+ROUTER_PID_FILE=/var/run/${NAME}_router.pid
 #WEBSERVER_PID_FILE=/var/run/${NAME}_webs.pid
-WEBSERVER_PORT=
-#WEBSERVER_IP=
-WEBSERVER_IP=
+WEBSERVER_PORT=54345
+#WEBSERVER_IP=127.0.0.1
+WEBSERVER_IP=0.0.0.0
 
 # By default both router and webserver are started
 # You may turn off one or the other by setting the appropraite
@@ -67,7 +67,7 @@ do_start() {
         echo -n "Starting webserver and FCGI processes for $NAME... "
         #start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --exec $DAEMON -- runserver $WEBSERVER_IP:$WEBSERVER_PORT
         #start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --exec $DAEMON -- runfcgi protocol=scgi host=$WEBSERVER_IP port=$WEBSERVER_PORT
-	#the process of the running app || echo Failed to start.
+	/usr/local/rapidsms/rapidsms runfcgi protocol=scgi host=127.0.0.1 port=54345 || echo Failed to start.
         echo "Webserver and FCGI processes started"
     fi
 }

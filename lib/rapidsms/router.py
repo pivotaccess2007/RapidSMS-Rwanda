@@ -320,10 +320,10 @@ class Router (component.Receiver):
         for phase in self.outgoing_phases:
             continue_sending = True
             
-			# call outgoing phases in the opposite order of the
-			# incoming phases so that, for example, the first app
-			# called with an incoming message is the last app called
-			# with an outgoing message
+            # call outgoing phases in the opposite order of the
+            # incoming phases so that, for example, the first app
+            # called with an incoming message is the last app called
+            # with an outgoing message
             for app in reversed(self.__sorted_apps()):
                 self.debug('OUT' + ' ' + phase + ' ' + app.slug)
                 try:

@@ -1,0 +1,180 @@
+{% extends base_template %}
+{% block title %}Statistics {%if locationname%}({{locationname}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}){%endif%}{% endblock %}
+{% block javascripts %}
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.pie.pack.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/jquery.datepick.min.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/stats.js"></script>
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/jquery.datepick.css" />
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/stats.css" />
+<!--[if IE]><script type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css"
+href="/static/webapp/javascripts/extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="/static/webapp/javascripts/extjs/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/extjs/ext-all-debug.js"></script>
+
+
+<script type="text/javascript"> 
+
+
+function deroulement(form)
+  {
+	path=document.URL	
+
+if ((form.province.value=="") || (form.district.value=="") || (form.location.value==""))
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			window.location=path;
+			}
+       }
+
+else {
+	form.submit();	
+	}
+
+ }
+
+
+</script>
+
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true" type="text/javascript"></script>
+	
+    <script type="text/javascript">
+    
+    function initialize() {
+      if (GBrowserIsCompatible()) {
+
+        function createMarker(point,html) {
+           var marker = new GMarker(point);
+           GEvent.addListener(marker, "click", function() {
+              marker.openInfoWindowHtml(html);
+           });
+           return marker;
+        }
+
+           // Display the map, with some controls and set the initial location 
+           var map = new GMap2(document.getElementById("map"));
+           map.addControl(new GSmallMapControl());
+           map.setCenter(new GLatLng(-1.9,29.9),8);
+    
+
+        {% for event in coords %}
+
+            var point = new GLatLng("{{ event.latitude }}","{{ event.longitude }}");
+            var marker = createMarker(point,' <div><strong><font size="4" face="verdana">Location name: {{ event.name }}<\/strong> <\/br><\/br><strong>Location code: {{ event.code }}{{event.type}} <\/font><\/strong> <\/div> ')
+            map.addOverlay(marker);
+		    
+		
+        {% endfor %}
+
+           
+        mapTypeId: google.maps.MapTypeId.ROADMAP;
+      }
+    }
+
+    </script>
+<script type="text/javascript">
+function show_alert()
+{
+prompt("http://www.google.com/", "myWindow", "status = 1, height = 300, width = 300, resizable = 0");
+}
+</script>
+
+{% endblock %}
+{% load cache %}
+
+{% block page_tabs %}
+<ul id="page-tabs">
+    <li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+    <li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+    <li class="page active"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %}
+
+{% load pagination-tags %}
+
+{% block content %}
+{#{% cache 3600 dashboard %}#}
+
+<div class="tmp">
+
+
+<div>
+    <form class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                <tr><th colspan="2">Period</th><th>Location</th><th></th><th></th><th></th></tr>
+                <tr><th>Start</th><th>End</th><th>Province</th><th>District</th><th>Health
+                        Centre</th><th></th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+            <input type="text" id="pickstartdate" value="{{ start_date }}"
+            name="start_date" readonly="readonly" size="10" /></td>
+        <td><input type="text" id="pickenddate" value="{{ end_date }}"
+            name="end_date" readonly="readonly" size="10" />
+                    </td>
+                    <td>
+            <select name="province" id="provchoose"><option></option>
+                {%  for loc in filters.province %}<option value="{{ loc.id }}" {% if loc.selected and request.GET.province %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="district" id="distchoose"><option></option>
+                {%  for loc in filters.district %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.district %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <select name="location" id="locchoose"><option></option>
+                {%  for loc in filters.location %}<option value="{{ loc.id }}"{% if loc.selected and request.GET.location %} selected="selected"{% endif %}>{{ loc.name }}</option>{%  endfor %}
+            </select>
+                    </td>
+                    <td>
+            <input type="button" value="Update Filters" onClick="return deroulement(this.form);" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    <div class="clear-hack"></div>
+</div>
+    <h2>At a Glance {%if not request.GET.province and not request.GET.district and not request.GET.location %}<p style=" text-align:center; ">{{usrloc.location}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%else%}<p style=" text-align:center; ">{{locationname}}, {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</p>{%endif%}</h2>
+    <table width="100%">
+        <thead>
+            <tr>
+                <th><a href="#"  onclick="show_alert()">Map</a></th>
+            </tr>
+        </thead>
+    </table>
+    <table width="100%">
+       <tbody>
+            <tr>               
+                  <body onload="initialize()" onunload="GUnload()" >
+                     <div  align="center"> <div id="map" style="width: 375px; height: 350px; border:0;border:#dddddd solid 4px;padding: 6px;background: #f3f3f3;"></div> </div>
+                  </body>
+                  
+            </tr>
+        </tbody>
+    </table>
+    
+<div>
+    
+	<div class="clear-hack"></div>
+</div>
+
+
+</div>
+{#{% endcache %}#}
+{% endblock %}
