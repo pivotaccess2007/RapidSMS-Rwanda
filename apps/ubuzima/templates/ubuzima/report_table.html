@@ -24,6 +24,7 @@
                 <td><a href="/ubuzima/reporter/{{report.reporter.pk}}">{{report.reporter.alias}}</a></td>
                 <td><a href="/ubuzima/patient/{{report.patient.pk}}">{{report.patient.national_id}}</a></td>
                 <td>{{report.summary}}</td>
+		<!-- {%for f in report.fields.all %}<td>{{f.value}}</td>{%endfor%} -->
             </tr>
         {% endfor %}
     </tbody>

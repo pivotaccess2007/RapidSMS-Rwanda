@@ -89,7 +89,7 @@ def start (args):
     # access it globally, including any subprocesses
     # spawned by django
     os.environ["RAPIDSMS_INI"] = ini
-
+   
     # read the config, which is shared
     # between the back and frontend
     conf = Config(ini)

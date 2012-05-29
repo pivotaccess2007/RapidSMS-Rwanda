@@ -7,7 +7,8 @@ import os, time
 import i18n
 
 
-DEBUG = False
+#DEBUG = False #uncomment in production
+DEBUG = True #comment in production
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = ()

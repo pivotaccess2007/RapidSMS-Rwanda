@@ -120,9 +120,6 @@ div.clear-hack {
 		bottom: 0;
 		padding: 0;
 		margin: 0;
-                text-align: center;
-                z-index: 1;
-                 
 	}
 	
 	/* global tabs sit on the right,
@@ -163,26 +160,26 @@ div.clear-hack {
 				background: url("../icons/silk/email_open.png") no-repeat 100% 50%;
 			}
 		
-			/**---Desactivated #tabs li.active a,
+			#tabs li.active a,
 			#page-tabs li.active a,
 			#tabs li.active a:hover,
 			#page-tabs li.active a:hover {
 				background: #55cfde url("../images/tab-bg-active.png") repeat-x;
 				
-				* border the same color as the
-				 * strip in the header-bg.png *
+				/* border the same color as the
+				 * strip in the header-bg.png */
 				border: 1px solid #cef1f5;
 				border-bottom: 0;
 			
-				* nudge the active tab
-				 * north by one pixel *
+				/* nudge the active tab
+				 * north by one pixel */
 				margin-top: -1px;
 			
 				/* don't underline links, even when hovering,
 				 * so we don't highlight the fact that this
-				 * is a link (it's already active)  *
+				 * is a link (it's already active)  */
 				text-decoration: none;
-			}*/
+			}
 		
 			/* brighten up inactive tabs when hovering */
 			#tabs li a:hover,
@@ -300,27 +297,6 @@ input.small {
 	width: 5em; 
 }
 
-.button {
-BORDER-RIGHT: #cccccc 1px solid;
-BORDER-TOP: #cccccc 1px solid;
-BORDER-BOTTOM: #cccccc 1px solid;
-BORDER-LEFT: #cccccc 1px solid;
-background-color:#2fa5d1;
-height:20px;
-color:white;
-FONT-SIZE: 12px;
-font-family: "verdana";
-font-weight:bold;
- }
-
-.input-text {
-  padding: 1px;
-  margin: 2px 0;
-  background-color: #FFFFFF;
-  border: 1px solid #A7BDCD;
-  font-size: 100%;
-}
-
 
 /* legal junk */
 #footer {
@@ -345,94 +321,3 @@ font-weight:bold;
 		float: right;
 		margin: 0;
 	}
-
-
-/* ---------------Amacode yanjye nongeyemo ------ 
-
-
------------------------------------------------*/
-
-
-
-#tabs > li { 
-        list-style-type:none;
-        display:block;
-        position:relative;       
-        color:#FFFFFF;
-        padding:0px;
-        /*border-right: 1px solid #11bad0;
-	border-left: 1px solid #11bad0;
-        /*background: #2fa5d1 url("../images/tab-bg.png") repeat-x; */
-}
-
-#tabs li a:hover {
-
-        text-decoration: underline;
-        background: #55cfde url("../images/tab-bg-active.png") repeat-x;
- }
-
-
-#tabs > li:hover ul { display:block; }
-
-
-#tabs li ul { 
-        margin:0px; 
-        padding:0px; 
-        display:none;
-}
-
-#tabs li ul li { 
-       list-style-type:none; 
-       margin:0px 0 0 0;
-       position:relative;
-       line-height: 28px;       
-}
-
-
-#tabs li ul li a { 
-      display:block; 
-      padding:2px 1em; 
-      color:#FFFFFF;
-      background: #2fa5d1 url("../images/tab-bg.png") repeat-x;      
-      
-}
-
-#tabs li ul li:hover a { 
-       background-color:#2fa5d1; 
-       
-}
-
-#tabs li span { 
-      cursor:pointer; 
-  
-}
-
-#tabs li:hover ul,
-#tabs li.sfHover ul {
-  top: 25px;
-}
-#tabs ul li {
-  border: 0;
-  float: none;
-}
-
-
-/* ---- Izi zirabitswe ---
-
-
-#tabs > li:hover { 
-        background-color:#808080; 
-        -moz-border-radius:10px; 
-        -webkit-border-radius:10px;
-        
-}
-
-
-#tabs li a:hover {
-        padding:5px 10px; 
-        background: #2fa5d1 url("../images/tab-bg.png") repeat-x;
-        -moz-border-radius:5px; 
-        -webkit-border-radius:5px;
- }
-
----*/

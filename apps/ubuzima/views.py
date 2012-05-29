@@ -11,12 +11,14 @@ from django.contrib.auth.decorators import permission_required
 from django.shortcuts import get_object_or_404
 from django.db import transaction, connection
 from django.db.models import Q
+from django.db.models import Count,Sum
 
 from rapidsms.webui.utils import *
 from reporters.models import *
 from reporters.utils import *
 from sys import getdefaultencoding
 from ubuzima.models import *
+from ubuzima.enum import *
 from django.contrib.auth.models import *
 
 
@@ -310,18 +312,19 @@ def matching_reports(req, diced, alllocs = False):
 def get_stats_track(req, filters):
     track = {'births':'Birth', 'pregnancy':'Pregnancy','anc':'ANC',
             'childhealth':'Child Health', 'risks': 'Risk','matdeaths':'Maternal Death','chideaths':'Child Death','newbdeaths':'New Born Death'}
+    reps=matching_reports(req, filters)
     for k in track.keys():
-        dem = matching_reports(req, filters).filter(type__name =
+        dem = reps.filter(type__name =
                 track[k]).select_related('patient')
         #if k == 'pregnancy' or k == 'births':
            # dem = set([x.patient.id for x in dem])
         track[k]  = len(dem)
     repgrp        = ReporterGroup.objects.filter(title = 'CHW')
-    reps          = matching_reports(req, filters).filter(reporter__groups__in = repgrp)
-    track['chws'] = len(reps)
-    track['matdeaths']=len(fetch_maternal_death(matching_reports(req, filters)))
-    track['chideaths']=len(fetch_child_death(matching_reports(req, filters)))
-    track['newbdeaths']=len(fetch_newborn_death(matching_reports(req, filters)))
+    
+    track['chws'] = len(reps.filter(reporter__groups__in = repgrp))
+    track['matdeaths']=len(fetch_maternal_death(reps))
+    track['chideaths']=len(fetch_child_death(reps))
+    track['newbdeaths']=len(fetch_newborn_death(reps))
     return track
 
 @permission_required('ubuzima.can_view')
@@ -346,7 +349,7 @@ def default_period(req):
     if req.REQUEST.has_key('start_date') and req.REQUEST.has_key('end_date'):
         return {'start':cut_date(req.REQUEST['start_date']),
                   'end':cut_date(req.REQUEST['end_date'])}
-    return {'start':date.today() - timedelta(7), 'end':date.today()}#In production
+    return {'start':date.today()-timedelta(datetime.datetime.today().day), 'end':date.today()}#In production
     #return {'start':date.today() - timedelta(date.today().day), 'end':date.today()}#locally
 
 def default_location(req):
@@ -492,19 +495,9 @@ def view_alerts(req, **flts):
 
 @permission_required('ubuzima.can_view')
 def health_indicators(req, flts):
-    ans    = []
-    return ans      #   For now.    TODO.
-    fields = FieldType.objects.filter(has_value = False).select_related('fields')[0:1]
-    for fld in fields:
-        tot = 0
-        for rep in matching_reports(req, flts)[0:2]:
-            if not fld in [x.type for x in rep.fields.all()[0:2]]:
-                continue
-            tot += 1
-        ans.append({'id':fld.id,
-            'proper_name':fld.description,
-            'instances_count':tot})
-    return ans
+    reports = matching_reports(req, flts)
+    fields = Field.objects.filter( report__in = reports).exclude(type__key__in = ['child_weight', 'child_number', 'muac', 'child_length', 'mother_weight','np']).exclude(type__category__name__in = ['Movement','Metric'])
+    return fields.values('type__id','type__description').annotate(tot=Count('id')).order_by('type__description')
 
 def the_chosen(hsh):
     ans = {}
@@ -561,98 +554,51 @@ def nine_months_ago(months = 9, auj = date.today()):
 def fetch_standards_ancs(qryset):
     ans=[]
     for x in qryset:
-        if x.date and (x.created.date() - x.date) < datetime.timedelta(140):
-            ans.append(x)
+        try:  
+            if (x.created.date() - x.date) < datetime.timedelta(140):
+                ans.append(x)
+        except: continue
     return ans
 
-def fetch_edd_info(qryset, jour):
-    #we dont have to pass this query set beacause a pregnancy report may be given any time!
-    locs=set()
-    for x in qryset:
-        if x.location in locs: continue
-        locs.add(x.location)
-    preg = ReportType.objects.get(name = 'Pregnancy')
-    dem  = Report.objects.filter(type = preg, date__gte =
-            nine_months_ago(9, jour), location__in=locs).select_related('patient')
-    seen = set()
-    ans  = []
-    for x in dem:
-        if x.patient.id in seen:
-            continue
-        if x.show_edd() >= jour and x.show_edd()< (jour + datetime.timedelta(30)): ans.append(x)
-        seen.add(x.patient.id)
-    return ans
+def fetch_edd_info(qryset, start, end):
+    edd_start,edd_end=Report.calculate_last_menses(start),Report.calculate_last_menses(end)
+    dem  = Report.objects.filter(type = ReportType.objects.get(name = 'Pregnancy'), date__gte =
+            edd_start, date__lte = edd_end,location__in=qryset.values('location')).select_related('patient')
+    return dem
+def fetch_edd(start, end):
+    edd_start,edd_end=Report.calculate_last_menses(start),Report.calculate_last_menses(end)
+    dem  = Report.objects.filter(type = ReportType.objects.get(name = 'Pregnancy'), date__gte =
+            edd_start, date__lte = edd_end).select_related('patient')
+    return dem
 
 def fetch_underweight_kids(qryset):
-    ftp = FieldType.objects.get(key = 'child_weight')
-    ans = []
-    for x in qryset:
-        dem = x.fields.all()
-        for y in dem:
-            if y.type == ftp and float(y.value) < 2.5:
-                ans.append(x)
-    return ans
-
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'child_weight'), value__lt = str(2.5) )).distinct()
+def fetch_boys_kids(qryset):
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'bo') )).distinct()
+def fetch_girls_kids(qryset):
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'gi') )).distinct()
 def fetch_home_deliveries(qryset):
-    ans = []
-    for x in qryset:
-        if x.is_home():
-            ans.append(x)
-    return ans
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'ho') )).distinct()
 
 def fetch_hosp_deliveries(qryset):
-    ans  = []
-    for x in qryset:
-        if x.is_hosp():
-            ans.append(x)
-    return ans
+    return qryset.filter(fields__in=Field.objects.filter(type__in=FieldType.objects.filter(key__in = ['hp','cl']) )).distinct()
 
 def fetch_en_route_deliveries(qryset):
-    ans = []
-    for x in qryset:
-        if x.is_route():
-            ans.append(x)
-    return ans
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'or') )).distinct()
 def fetch_unknown_deliveries(qryset):
-    ans = []
-    for x in qryset:
-        if x.is_home() or x.is_route() or x.is_hosp():
-            pass
-        else:
-            ans.append(x)
-    return ans
+    return qryset.exclude(fields__in=Field.objects.filter(type__in=FieldType.objects.filter(key__in = ['hp','cl','ho','or']) )).distinct()
 
 def fetch_anc2_info(qryset):
-    ftp = FieldType.objects.get(key = 'anc2')
-    ans = []
-    for x in qryset:
-        if ftp in [y.type for y in x.fields.all()]:
-            ans.append(x)
-    return ans
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'anc2'))).distinct()
 
 def fetch_anc3_info(qryset):
-    ftp = FieldType.objects.get(key = 'anc3')
-    ans = []
-    for x in qryset:
-        if ftp in [y.type for y in x.fields.all()]:
-            ans.append(x)
-    return ans
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'anc3'))).distinct()
 
 def fetch_anc4_info(qryset):
-    ftp = FieldType.objects.get(key = 'anc4')
-    ans = []
-    for x in qryset:
-        if ftp in [y.type for y in x.fields.all()]:
-            ans.append(x)
-    return ans
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'anc4'))).distinct()
 
 def fetch_ancdp_info(qryset):
-    ftp = FieldType.objects.get(key = 'dp')
-    ans = []
-    for x in qryset:
-        if ftp in [y.type for y in x.fields.all()]:
-            ans.append(x)
-    return ans
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'dp'))).distinct()
 
 class Gatherer:
     them   = {}
@@ -702,90 +648,48 @@ def get_patients(qryset):
         pats.add(rep.patient)
     return pats
 
+def fetch_anc1_info(qryset):
+    return qryset.filter(type=ReportType.objects.get(name = 'Pregnancy'))
+
 def fetch_all4ancs_info(qryset,jour):
-    reps=Report.objects.filter(type__in=ReportType.objects.filter(name__in=['Pregnancy','ANC']),date__gte = nine_months_ago(9, jour))
-    ans  = []
-    anc4=fetch_anc4_info(qryset)
-    patientCounts = {}
-    patientList=set()
-    for rep in reps:
-        patientList.add(rep.patient)
-        patientCounts[rep.patient]={'count':0,'dates':set()}
-    
-    for x in reps:
-        if x.patient in patientList:
-            patientCounts[x.patient]['count']=patientCounts[x.patient]['count']+1
-            patientCounts[x.patient]['dates'].add(x.date)
-        if patientCounts[x.patient]['count'] >= 4 and x in anc4 and len(patientCounts[x.patient]['dates']) >= 4: ans.append(x)
-    return ans
+    rps=Report.objects.filter(patient__in=Patient.objects.filter(id__in=fetch_anc4_info(qryset).values_list('patient')),type__name__in\
+                    =["Pregnancy","ANC"],date__gte=nine_months_ago(9, jour))
+    return Patient.objects.filter(id__in=fetch_anc3_info(rps).values_list('patient'))&Patient.objects.filter(id__in=fetch_anc2_info(rps)\
+                                            .values_list('patient'))&Patient.objects.filter(id__in=fetch_anc1_info(rps).values_list('patient'))
 
 def fetch_maternal_death(qryset):
-    deaths=[]
-    for x in qryset:
-        if x.is_maternal_death():
-            deaths.append(x)
-    return deaths
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'md'))).distinct()
 
 def fetch_child_death(qryset):
-    deaths=[]
-    for x in qryset:
-        if x.is_child_death():
-            deaths.append(x)
-    return deaths
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'cd'))).distinct()
 
 def fetch_newborn_death(qryset):
-    deaths=[]
-    for x in qryset:
-        if x.is_newborn_death():
-            deaths.append(x)
-    return deaths
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'nd'))).distinct()
 
 def fetch_vaccinated_info(qryset):
-    vacs=[]
-    for x in qryset:
-        if x.was_vaccinated():
-            vacs.append(x)
-    return vacs
+    return qryset.filter(fields__in=Field.objects.filter(type__in = FieldType.objects.filter(category=FieldCategory.objects.get(name='Vaccination')))).distinct()
 
 def fetch_vaccinated_stats(reps):
     track={}
-    for vac in FieldType.objects.filter(category=FieldCategory.objects.get(name='Vaccination')).order_by('pk'):
-        ans=[]
-        for rep in reps:
-            if rep.was_vaccinated_with(vac):
-                ans.append(rep)
-        track[vac]=ans
+    for r in FieldType.objects.filter(category=FieldCategory.objects.get(name='Vaccination')): track[r.key]=reps.filter(fields__in = Field.objects.filter(type=FieldType.objects.get(key=r.key))).distinct()
     return track
 
-def fetch_high_risky_preg(qryset):
-    ans=[]
-    preg=qryset.filter(type=ReportType.objects.get(name='Pregnancy'))
-    for x in preg:
-        if x.is_high_risky_preg(): ans.append(x)
-    return ans
+def fetch_high_risky_preg(qryset):    
+    return qryset.filter(fields__in = Field.objects.filter(type__in = FieldType.objects.filter(key__in =['ps','ds','sl','ja','fp','un','sa','co','he','pa','ma','sc','la'])))
 
 def fetch_without_toilet(qryset):
-    ans=[]
-    preg=qryset.filter(type=ReportType.objects.get(name='Pregnancy'))
-    for x in preg:
-        if x.has_no_toilet(): ans.append(x)
-    return ans
+    return qryset.filter(fields__in = Field.objects.filter(type = FieldType.objects.get(key ='nt')))
 
 def fetch_without_hw(qryset):
-    ans=[]
-    preg=qryset.filter(type=ReportType.objects.get(name='Pregnancy'))
-    for x in preg:
-        if x.has_no_hw(): ans.append(x)
-    return ans
+    return qryset.filter(fields__in = Field.objects.filter(type = FieldType.objects.get(key ='nh')))
 
 def get_important_stats(req, flts):
     rpt    = ReportType.objects.get(name = 'Birth')
     regula = matching_reports(req, flts)
     qryset = regula.filter(type = rpt).select_related('patient')
-    stds, nstd = Gatherer(regula).distinguish()
     ans    = [
-   {'label':'Expected deliveries in the next 30 days',          'id':'expected',
-   'number':len(fetch_edd_info(regula, flts['period']['end']))},
+   {'label':'Expected deliveries ',          'id':'expected',
+   'number':len(fetch_edd_info(regula, flts['period']['start'], flts['period']['end']))},
    {'label':'Underweight Births',           'id':'underweight',
    'number':len(fetch_underweight_kids(qryset))},
    {'label':'Delivered at Home',            'id':'home',
@@ -800,6 +704,7 @@ def get_important_stats(req, flts):
     return ans
 
 #View Stats by reports and on Graph view
+
 #Risks Stats
 def risk_details(req,**flts):
     filters   = {'period':default_period(req),
@@ -1190,7 +1095,7 @@ def important_data(req, format, dat):
     qryset = regula.filter(type = rpt).select_related('fields')
     rez = []
     if dat == 'expected':
-        rez = fetch_edd_info(regula, flts['period']['end'])
+        rez = fetch_edd_info(regula, flts['period']['start'], flts['period']['end'])
     elif dat == 'underweight':
         rez = fetch_underweight_kids(qryset)
     elif dat == 'home':
@@ -1232,7 +1137,6 @@ def view_stats(req, **flts):
              'province':default_province(req),
              'district':default_district(req)}
     track   = get_stats_track(req, filters)
-    hindics = health_indicators(req, filters)
     stt = filters['period']['start']
     fin = filters['period']['end']
     lox, lxn, crd = 0, location_name(req), map_pointers(req,
@@ -1240,26 +1144,28 @@ def view_stats(req, **flts):
     if req.REQUEST.has_key('location') and req.REQUEST['location'] != '0':
         lox = int(req.REQUEST['location'])
         lxn = Location.objects.get(id = lox)
-    return render_to_response(req, 'ubuzima/stats_test.html',
+    return render_to_response(req, 'ubuzima/stats.html',
            {'track':track, 'filters':filters,'usrloc':UserLocation.objects.get(user=req.user),
-          'hindics':paginated(req, hindics, prefix = 'hind'),
        'start_date':date.strftime(filters['period']['start'], '%d.%m.%Y'),
          'end_date':date.strftime(filters['period']['end'], '%d.%m.%Y'),
            'coords':crd, 'location': lox, 'locationname':lxn,
            'chosen':the_chosen(req.REQUEST),
         'important':get_important_stats(req, filters),
-          'targets':HealthTarget.objects.all(),
            'postqn':(req.get_full_path().split('?', 2) + [''])[1]})
 
 @permission_required('ubuzima.can_view')
 def view_indicator(req, indic, format = 'html'):
-    filters = {'period':default_period(req),
-             'location':default_location(req)}
-    fld     = FieldType.objects.get(id = indic)
-    pts     = matching_reports(req, filters).order_by('-created')[0:1]
-    for p in range(0, len(pts)):
-        if fld not in pts[p].fields.all()[0:1]: del pts[p]
+    resp=pull_req_with_filters(req)
+    filters = resp['filters']
+    indicator = FieldType.objects.get(id = indic) 
+    pts     = matching_reports(req, filters).filter(fields__in = Field.objects.filter( type = indicator))
     heads   = ['Reporter', 'Location', 'Patient', 'Type', 'Date']
+    resp['headers'] = heads
+    resp['reports'] = paginated(req, pts, prefix = 'ind')
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    annot = resp['annot_l']
+    ans_l, ans_m = {},{}
     if format == 'csv':
         rsp = HttpResponse()
         rsp['Content-Type'] = 'text/csv; encoding=%s' % (getdefaultencoding(),)
@@ -1267,8 +1173,17 @@ def view_indicator(req, indic, format = 'html'):
         wrt.writerows([heads] +
         [[x.reporter.connection().identity, x.location, x.patient, x.type, x.created] for x in pts])
         return rsp
-    return render_to_response(req, ('ubuzima/indicator.html'),
-            {'headers': heads, 'patients':paginated(req, pts, prefix = 'ind')})
+    if pts.exists(): 
+        pts_l = pts.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+
+        ans_l = {'pts' : pts_l, 'tot':pts.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])}
+
+        pts_m = pts.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        ans_m = {'pts' : pts_m, 'tot': pts.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')}
+
+    resp['track'] = {'items_l':ans_l, 'items_m':ans_m, 'months' : months_between(start,end), 'indicator': indicator}
+    return render_to_response(req, ('ubuzima/indicator.html'), resp)
 
 @permission_required('ubuzima.can_view')
 def view_stats_reports_csv(req):
@@ -1324,6 +1239,7 @@ def error_display(req):
     them = ErrorNote.objects.all().order_by('-created')
     return render_to_response(req, 'ubuzima/errors.html',
             {'errors':paginated(req, them, prefix = 'err')})
+@permission_required('ubuzima.can_view')
 def agstats(req, **flts):
     filters = {'period':default_period(req),
              'location':default_location(req),
@@ -1350,7 +1266,7 @@ def agstats(req, **flts):
              'end_date':date.strftime(filters['period']['end'], '%d.%m.%Y'),
                'locationname':lxn,
                'postqn':(req.get_full_path().split('?', 2) + [''])[1]})
-
+@permission_required('ubuzima.can_view')
 def agstats_csv(req):
     filters = {'period':default_period(req),
              'location':default_location(req),
@@ -1375,5 +1291,450 @@ def agstats_csv(req):
     wrt = csv.writer(rsp, dialect = 'excel-tab')
     wrt.writerows([heads]+[[r['prv'], r['dst'], r['hc'], r['birth'], r['pregnancy'], r['anc'], r['chihe'], r['risk'], r['matdeaths'], r['chideaths'], r['newbdeaths'], r['tot']] for r in outsts])
     return rsp
+
+
+@permission_required('ubuzima.can_view')
+def dash(req):
+    resp=pull_req_with_filters(req)
+    resp['reports'] = paginated(req, matching_reports(req,resp['filters']), prefix="rep")
+    return render_to_response(req,
+            "ubuzima/dash.html", resp)
+    
+
+def child_locs(loc,filters):
+    if loc.type.name == "Nation": return Location.objects.filter(parent=loc)
+    elif loc.type.name == "Province": return filters['district'] if filters['district'] else Location.objects.filter(id__in =\
+                                            LocationShorthand.objects.filter(province=loc).values_list('original'), type__name='Health Centre').order_by('name')
+    elif loc.type.name == "District": return filters['location'] if filters['location'] else Location.objects.filter(id__in = LocationShorthand.objects.filter\
+                                                                             (district=loc).values_list('original'), type__name='Health Centre').order_by('name')
+    elif loc.type.name == "Health Centre": return filters['location'] if filters['location'] else Location.objects.filter(id=loc.id).order_by('name')
+
+def pull_req_with_filters(req):
+    try:
+        p = UserLocation.objects.get(user=req.user)
+        sel,prv,dst,lxn=None,None,None,None
+        filters = {'period':default_period(req),
+             'location':default_location(req),
+             'province':default_province(req),
+             'district':default_district(req),}
+        try:    sel,lxn=int(req.REQUEST['location']),LocationShorthand.objects.get(original=Location.objects.get(pk=int(req.REQUEST['location'])))
+        except KeyError:
+            try:    sel,dst=int(req.REQUEST['district']),Location.objects.get(pk=int(req.REQUEST['district']))
+            except KeyError:
+                try:    sel,prv=int(req.REQUEST['province']),Location.objects.get(pk=int(req.REQUEST['province']))
+                except KeyError:    pass
+        if sel: sel=Location.objects.get(pk=sel)
+        if not sel: sel = p.location 
+        locs=child_locs(sel,filters)
+        
+        return {'usrloc':UserLocation.objects.get(user=req.user),'locs':locs,'annot':annot_val(sel),'annot_l':annot_locs_val(sel),'start_date':date.strftime(filters['period']['start'], '%d.%m.%Y'),
+             'end_date':date.strftime(filters['period']['end'], '%d.%m.%Y'),'filters':filters,'sel':sel,'prv':prv,'dst':dst,'lxn':lxn,'postqn':(req.get_full_path().split('?', 2) + [''])[1]}
+    except UserLocation.DoesNotExist,e:
+        return render_to_response(req,"404.html",{'error':e})
+
+def annot_val(loc):
+    if loc.type.name == "Nation": return "location__parent__parent__parent__parent__name,location__parent__parent__parent__parent__pk"
+    elif loc.type.name == "Province": return "location__parent__parent__parent__name,location__parent__parent__parent__pk"
+    elif loc.type.name == "District": return "location__parent__parent__name,location__parent__parent__pk"
+    else: return "location__name,location__pk"
+
+def annot_locs_val(loc):
+    if loc.type.name == "Nation": return "location__parent__parent__parent__name,location__parent__parent__parent__pk"
+    elif loc.type.name == "Province": return "location__parent__parent__name,location__parent__parent__pk"
+    elif loc.type.name == "District": return "location__name,location__pk"
+    else: return "location__name,location__pk"
+
+@permission_required('ubuzima.can_view')
+def charts(req):
+    resp = pull_req_with_filters(req)
+    qryset, sel = matching_reports(req,resp['filters']).filter(type__name='Birth'), resp['sel']
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    
+    ans, ans_c = qryset.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), None
+    
+    if qryset.exists():
+        boys,girls,unwe,home,fac,route,unk = fetch_boys_kids(qryset),fetch_girls_kids(qryset),fetch_underweight_kids(qryset),\
+                            fetch_home_deliveries(qryset),fetch_hosp_deliveries(qryset),fetch_en_route_deliveries(qryset),fetch_unknown_deliveries(qryset)
+        fac_c, route_c, home_c, unk_c = fac.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), route.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), home.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'),unk.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        ans_c = {'fac' : fac_c, 'route' : route_c, 'home': home_c, 'unk': unk_c}
+
+    resp['track'] = {'label':['Boys','Girls','Underweight Births','Delivered at Home','Delivered at Health Facility','Delivered en route','Delivered Unknown'],'items':ans, 'items_c':ans_c, 'months' : months_between(start,end), 'qryset': qryset}
+    return render_to_response(req, 'ubuzima/charts.html',
+           resp)   
+
+
+def months_between(start,end):
+    months = []
+    cursor = start
+
+    while cursor <= end:
+        m="%d-%d"%(cursor.month,cursor.year)
+        if m not in months:
+            months.append(m)
+        cursor += timedelta(weeks=1)
+    
+    return months 
+
+def months_enum():
+    months=Enum('Months',JAN = 1, FEB = 2, MAR = 3, APR = 4, MAY = 5, JUN = 6, JUL = 7, AUG = 8, SEP = 9, OCT = 10, NOV = 11, DEC = 12)
+    return months
+
+
+def cut_reps_within_months(reps,start,end):
+    months_b = months_between(start,end)
+    months_e = months_enum()
+    ans = []
+    i=0
+    for m in months_b:
+        i=i+1
+        ans.append( { 'month' : "%d,"%i+months_e.getByValue(m[0]).name + "-%d" % m[1] , 'data' : reps.filter( date__month = m[0] , date__year = m[1]).count()}  )
+    
+    return ans
+
+def cut_births_within_months(births,start,end):
+    months_b = months_between(start,end)
+    months_e = months_enum()
+    ans = []
+    i=0
+    for m in months_b:
+        i=i+1
+        ans.append( {'home': births.filter(fields__in=Field.objects.filter(type__key='ho'), date__month = m[0] , date__year = m[1]).count(),'fac': births.filter(fields__in=Field.objects.filter(type__key__in=['hp','cl']), date__month = m[0] , date__year = m[1]).count(),'route': births.filter( fields__in=Field.objects.filter(type__key='or'), date__month = m[0] , date__year = m[1]).count(),'total':births.filter(date__month = m[0] , date__year = m[1]).count(),'month' : "%d,"%i+months_e.getByValue(m[0]).name + "-%d" % m[1]}  )
+    
+    return ans
+###START DEATH TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def death_report(req):
+
+    resp = pull_req_with_filters(req)
+    reports = matching_reports(req,resp['filters'])
+    qryset = reports.filter(fields__in = Field.objects.filter(type__key__in = ["md","cd","nd"]))
+    births = reports.filter(type__name='Birth', date__gte = resp['filters']['period']['start'], date__lte = resp['filters']['period']['end'])
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    annot = resp['annot_l']
+    locs = resp['locs']
+    ans_l, ans_m = {},{}
+    resp['reports'] = paginated(req, qryset, prefix="rep")
+    if qryset.exists():
+
+        matde, chide, nebde = fetch_maternal_death(qryset),fetch_child_death(qryset),fetch_newborn_death(qryset) 
+ 
+        matde_l,chide_l,nebde_l = matde.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), chide.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), nebde.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+
+        ans_l = {'matde' : matde_l, 'chide' : chide_l, 'nebde': nebde_l, 'tot': qryset.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]) }
+
+        matde_m, chide_m, nebde_m = matde.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), chide.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), nebde.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        ans_m = {'matde' : matde_m, 'chide' : chide_m, 'nebde': nebde_m, 'tot': qryset.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')}
+
+    resp['track'] = {'items_l':ans_l, 'items_m':ans_m, 'months' : months_between(start,end), 'bir_l': births.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), 'bir_m': births.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')}
+    return render_to_response(req, 'ubuzima/death_report.html',
+           resp) 
+
+###END OF DEATH TABLES, CHARTS, MAP
+
+###START RISK TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def risk_report(req):
+
+    resp = pull_req_with_filters(req)
+    reports = matching_reports(req,resp['filters'])
+    resp['reports'] = reports
+    qryset = reports.filter(fields__in = Field.objects.filter(type__in = Field.get_risk_fieldtypes()))
+    allpatients = Patient.objects.filter( id__in = reports.values('patient')) 
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    annot = resp['annot_l']
+    resp['reports'] = paginated(req, qryset, prefix="rep")
+    ans_l, ans_m = {},{}
+    if qryset.exists():
+        
+        patients = allpatients.filter( id__in = qryset.values('patient'))
+        alerts = qryset.filter( id__in = TriggeredAlert.objects.filter( report__in = qryset).values('report'))
+        red_patients = patients.filter( id__in = alerts.values('patient'))
+        yes_alerts = qryset.filter( id__in = TriggeredAlert.objects.filter( report__in = qryset, trigger__destination = "AMB", response = 'YES').values('report'))
+        po_alerts = qryset.filter( id__in = TriggeredAlert.objects.filter( report__in = qryset, trigger__destination__in = ["SUP","DIS"], response = 'PO').values('report'))
+
+        patients_l, alerts_l, red_patients_l, yes_alerts_l, po_alerts_l = patients.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), alerts.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), red_patients.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), yes_alerts.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), po_alerts.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+
+        ans_l = {'pats' : patients_l, 'alts' : alerts_l, 'rpats': red_patients_l, 'yalts': yes_alerts_l, 'palts': po_alerts_l, 'tot': qryset.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]) }
+
+        patients_m, alerts_m, red_patients_m, yes_alerts_m, po_alerts_m = qryset.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('patient',distinct = True)).order_by('year','month'), alerts.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), alerts.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('patient',distinct = True)).order_by('year','month'), yes_alerts.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), po_alerts.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        ans_m = {'pats' : patients_m, 'alts' : alerts_m, 'rpats': red_patients_m, 'yalts': yes_alerts_m, 'palts': po_alerts_m, 'tot': qryset.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')}
+
+    resp['track'] = {'items_l':ans_l, 'items_m':ans_m, 'months' : months_between(start,end), 'pats_l': allpatients.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), 'pats_m': reports.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('patient',distinct = True)).order_by('year','month')}
+    return render_to_response(req, 'ubuzima/risk_report.html',
+           resp) 
+
+###END OF RISK TABLES, CHARTS, MAP
+
+
+##START OF BIRTH TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def birth_report(req):
+    resp=pull_req_with_filters(req)
+    resp['reports']=matching_reports(req,resp['filters'])
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    #qryset = resp['reports'].filter(type__name='Birth')
+    qryset = resp['reports'].filter(type__name='Birth', date__gte = start, date__lte = end )
+    #print qryset.count()
+    annot=resp['annot_l']
+    locs=resp['locs']
+    #print qryset.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+    ans_l, ans_m = {}, {}
+    resp['reports'] = paginated(req, qryset, prefix="rep")
+    if qryset.exists(): 
+        home,fac,route,unk = fetch_home_deliveries(qryset),fetch_hosp_deliveries(qryset),fetch_en_route_deliveries(qryset),fetch_unknown_deliveries(qryset)
+  
+        home_l,fac_l,route_l,unk_l = home.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), fac.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), route.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), unk.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+
+        ans_l = {'fac' : fac_l, 'route' : route_l, 'home': home_l, 'unk': unk_l, 'tot':qryset.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])}
+
+        fac_m, route_m, home_m, unk_m = fac.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), route.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), home.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'),unk.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        ans_m = {'fac' : fac_m, 'route' : route_m, 'home': home_m, 'unk': unk_m, 'tot': qryset.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')}
+
+    resp['track'] = {'items_l':ans_l, 'items_m':ans_m, 'months' : months_between(start,end)}
+    return render_to_response(req, 'ubuzima/birth_report.html',
+           resp)
+##END OF BIRTH TABLES, CHARTS, MAP
+
+##START OF PREGNANCY TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def preg_report(req):
+    resp=pull_req_with_filters(req)
+    resp['reports']=matching_reports(req,resp['filters'])
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    preg = resp['reports'].filter(type__name='Pregnancy', date__gte = start, date__lte = end )
+    annot = resp['annot_l']
+    locs = resp['locs']
+    ans_l, ans_m, rez = {}, {}, {}
+    rez['%s__in'%annot.split(',')[1]] = [l.pk for l in locs]
+    edd = fetch_edd( start, end).filter(** rez)
+    resp['reports'] = paginated(req, preg, prefix="rep")
+    if preg.exists() or edd.exists(): 
+        preg_l, preg_risk_l, edd_l, edd_risk_l = preg.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), fetch_high_risky_preg(preg).values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), edd.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), fetch_high_risky_preg(edd).values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]) 
+
+        ans_l = {'pre' : preg_l, 'prehr' : preg_risk_l, 'edd': edd_l, 'eddhr': edd_risk_l}
+
+        preg_m, preg_risk_m, edd_m, edd_risk_m = preg.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), fetch_high_risky_preg(preg).extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), edd.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'),fetch_high_risky_preg(edd).extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        ans_m = {'pre' : preg_m, 'prehr' : preg_risk_m, 'edd': edd_m, 'eddhr': edd_risk_m}
+        
+    resp['track'] = {'items_l':ans_l, 'items_m':ans_m, 'months' : months_between(start,end), 'months_edd' : months_between(Report.calculate_last_menses(start),Report.calculate_last_menses(end))}
+    return render_to_response(req, 'ubuzima/preg_report.html',
+           resp)
+##END OF PREGNANCY TABLES, CHARTS, MAP
+
+##START OF ADMIN TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def admin_report(req):
+    resp=pull_req_with_filters(req)
+    annot = resp['annot_l']
+    locs = resp['locs']
+    ans_l, ans_m, rez = {}, {}, {}
+    rez['%s__in'%annot.split(',')[1]] = [l.pk for l in locs]
+    reporters = Reporter.objects.filter(groups__title = 'CHW', ** rez)
+    active = reporters.filter(connections__in = PersistantConnection.objects.filter(last_seen__gte = datetime.datetime.today().date() - timedelta(30)))
+    resp['reports'] = paginated(req, reporters, prefix="rep")
+    if reporters.exists() or active.exists(): 
+        reporters_l, active_l = reporters.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]), active.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+
+        ans_l = {'rep' : reporters_l, 'act' : active_l}
+        
+    resp['track'] = {'items_l':ans_l}
+    return render_to_response(req, 'ubuzima/admin_report.html',
+           resp)
+##END OF ADMIN TABLES, CHARTS, MAP
+
+##START OF CHILD TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def child_report(req):
+    resp=pull_req_with_filters(req)
+    resp['reports']=matching_reports(req,resp['filters'])
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    qryset = resp['reports'].filter(type__name='Birth', date__gte = start, date__lte = end )
+    annot=resp['annot_l']
+    locs=resp['locs']
+    resp['reports'] = paginated(req, qryset, prefix="rep")
+    return render_to_response(req, 'ubuzima/child_report.html',
+           resp)
+##END OF CHILD TABLES, CHARTS, MAP
+##START OF CHILD DETAILS TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def child_details_report(req, pk):
+    resp=pull_req_with_filters(req)
+    birth = Report.objects.get(pk = pk)
+    child = birth.get_child()
+    resp['reports'] = paginated(req, child['log'], prefix="rep")    
+    resp['track'] = child
+    return render_to_response(req, 'ubuzima/child_details.html',
+           resp)
+##END OF CHILD DETAILS TABLES, CHARTS, MAP
+
+###Function to test any template
+@permission_required('ubuzima.can_view')
+def tests(req,dat):
+    resp=pull_req_with_filters(req)
+    annot=resp['annot']
+    locs=resp['locs']
+    qryset,ans=None,[]
+    if dat == 'bir': 
+        qryset = matching_reports(req,resp['filters']).filter(type__name='Birth')
+        if qryset:
+            boys,girls,unwe,home,fac,route,unk = fetch_boys_kids(qryset),fetch_girls_kids(qryset),fetch_underweight_kids(qryset),\
+                            fetch_home_deliveries(qryset),fetch_hosp_deliveries(qryset),fetch_en_route_deliveries(qryset),fetch_unknown_deliveries(qryset)
+            ans = [ 
+                    {   'label':['Boys','Girls','Underweight Births','Delivered at Home','Delivered at Health Facility','Delivered en route','Delivered Unknown'],
+                        'number':[boys.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]),
+                        girls.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]),
+                        unwe.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]),
+                        home.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]),
+                        fac.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]),
+                        route.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]),
+                        unk.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0]),		
+                        ],
+                        'totals':[boys.count(),girls.count(),unwe.count(),home.count(),fac.count(),route.count(),unk.count()],
+                        'totalglobal':qryset.count()
+                    }
+                ]
+        else: pass
+    resp['track'] = ans
+    resp['lev']=annot.split(',')[0]
+    return render_to_response(req, 'ubuzima/test.html',
+           resp)
+
+
+##DASHBOARD 
+@permission_required('ubuzima.can_view')
+def dashboard(req):
+    resp=pull_req_with_filters(req)
+    hindics = health_indicators(req,resp['filters'])
+    resp['hindics'] = paginated(req, hindics, prefix = 'hind')
+    return render_to_response(req,
+            "ubuzima/dashboard.html", resp)
+##END OF DASHBOARD
+
+def fetch_pnc1_info(qryset):
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'pnc1'))).distinct()
+
+def fetch_pnc2_info(qryset):
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'pnc2'))).distinct()
+
+def fetch_pnc3_info(qryset):
+    return qryset.filter(fields__in=Field.objects.filter(type=FieldType.objects.get(key = 'pnc3'))).distinct()
+
+
+def fetch_eddanc2_info(qryset, start, end):
+    eddanc2_start,eddanc2_end=Report.calculate_last_menses(start+datetime.timedelta(days=Report.DAYS_ANC2)),Report.calculate_last_menses(end+datetime.timedelta(days=Report.DAYS_ANC2))
+    demo  = Report.objects.filter(type = ReportType.objects.get(name = 'Pregnancy'), date__gte =
+            eddanc2_start, date__lte = eddanc2_end,location__in=qryset.values('location')).select_related('patient')
+    return demo
+
+def fetch_eddanc3_info(qryset, start, end):
+    eddanc3_start,eddanc3_end=Report.calculate_last_menses(start+datetime.timedelta(days=Report.DAYS_ANC3)),Report.calculate_last_menses(end+datetime.timedelta(days=Report.DAYS_ANC3))
+    demo  = Report.objects.filter(type = ReportType.objects.get(name = 'Pregnancy'), date__gte =
+            eddanc3_start, date__lte = eddanc3_end,location__in=qryset.values('location')).select_related('patient')
+    return demo
+
+def fetch_eddanc4_info(qryset, start, end):
+    eddanc4_start,eddanc4_end=Report.calculate_last_menses(start+datetime.timedelta(days=Report.DAYS_ANC4)),Report.calculate_last_menses(end+datetime.timedelta(days=Report.DAYS_ANC4))
+    demo  = Report.objects.filter(type = ReportType.objects.get(name = 'Pregnancy'), date__gte =
+            eddanc4_start, date__lte = eddanc4_end,location__in=qryset.values('location')).select_related('patient')
+    return demo
+
+
+
+
+###START ANC TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def anc_report(req):
+    resp=pull_req_with_filters(req)
+    reports = matching_reports(req,resp['filters'])
+    resp['reports']=reports
+    ##qryset=resp['reports'].filter(type__name='ANC')
+    qryset = resp['reports'].filter(fields__in = Field.objects.filter(type__key__in = ["anc2","anc3","anc4"]))
+    preg_reps=resp['reports'].filter(type__name='Pregnancy',date__gte = resp['filters']['period']['start'], date__lte = resp['filters']['period']['end'])
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    annot=resp['annot_l']
+    locs=resp['locs']
+    ans_l, ans_m = {},{}
+    ans_t = qryset.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+    if qryset.exists():
+        eddanc2,eddanc3,eddanc4= fetch_eddanc2_info(qryset,start,end),fetch_eddanc3_info(qryset,start,end),fetch_eddanc4_info(qryset,start,end)
+        anc1,anc2,anc3,anc4 = preg_reps,fetch_anc2_info(qryset),fetch_anc3_info(qryset),fetch_anc4_info(qryset)
+
+        anc1_c = anc1.extra(select={'year': 'EXTRACT(year FROM date)','month': 'EXTRACT(month FROM date)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        anc2_c = anc2.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+        anc3_c = anc3.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+        anc4_c = anc4.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+        eddanc2_c = eddanc2.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+        eddanc3_c = eddanc3.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+        eddanc4_c = eddanc4.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+
+        ans_m = {'anc1_m' : anc1_c, 'anc2_m' : anc2_c, 'anc3_m': anc3_c, 'anc4_m': anc4_c, 'eddanc2_m': eddanc2_c, 'eddanc3_m': eddanc3_c, 'eddanc4_m': eddanc4_c,'tot_m': qryset.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')}
+
+
+        anc1_l=anc1.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        anc2_l=anc2.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        anc3_l=anc3.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        anc4_l=anc4.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        eddanc2_l=eddanc2.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        eddanc3_l=eddanc3.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        eddanc4_l = eddanc4.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+
+        ans_l = {'anc1' : anc1_l, 'anc2' : anc2_l, 'anc3': anc3_l, 'anc4': anc4_l, 'eddanc2': eddanc2_l, 'eddanc3': eddanc3_l, 'eddanc4': eddanc4_l, 'tot':qryset.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])}
+
+    resp['track'] = {'items':ans_l, 'items_m':ans_m,'items_t':ans_t, 'months' : months_between(start,end)}
+    return render_to_response(req, 'ubuzima/anc_report.html',resp)  
+
+###END OF ANC TABLES, CHARTS, MAP
+
+
+
+###START PNC TABLES, CHARTS, MAP
+@permission_required('ubuzima.can_view')
+def pnc_report(req):
+    resp=pull_req_with_filters(req)
+    resp['reports']=matching_reports(req,resp['filters'])
+    ##qryset=resp['reports'].filter(type__name='ANC')
+    qryset = resp['reports'].filter(fields__in = Field.objects.filter(type__key__in = ["pnc1","pnc2","pnc3"]))
+    end = resp['filters']['period']['end']
+    start = resp['filters']['period']['start']
+    annot=resp['annot_l']
+    locs=resp['locs']
+    ans_l, ans_m = {},{}
+
+    if qryset.exists():
+        pnc1_m,pnc2_m,pnc3_m = fetch_pnc1_info(qryset),fetch_pnc2_info(qryset),fetch_pnc3_info(qryset)
+
+        pnc1_c, pnc2_c, pnc3_c = pnc1_m.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), pnc2_m.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month'), pnc3_m.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')
+
+        ans_m = {'pnc1_m' : pnc1_c, 'pnc2_m' : pnc2_c, 'pnc3_m': pnc3_c ,'tot_m': qryset.extra(select={'year': 'EXTRACT(year FROM created)','month': 'EXTRACT(month FROM created)'}).values('year', 'month').annotate(number=Count('id')).order_by('year','month')}
+
+
+
+        pnc1_l= fetch_pnc1_info(qryset).values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        pnc2_l= fetch_pnc2_info(qryset).values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+        pnc3_l= fetch_pnc3_info(qryset).values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])
+
+        ans_l = {'pnc1' : pnc1_l, 'pnc2' : pnc2_l, 'pnc3': pnc3_l, 'tot':qryset.values(annot.split(',')[0],annot.split(',')[1]).annotate(number=Count('id')).order_by(annot.split(',')[0])}
+
+
+    resp['track'] = {'items':ans_l, 'items_m':ans_m, 'months' : months_between(start,end)}
+    return render_to_response(req, 'ubuzima/pnc_report.html',resp)  
+
+###END OF PNC TABLES, CHARTS, MAP
+
 
 #   TODO: Error-prone list should be done in raw SQL. Later.

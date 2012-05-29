@@ -30,15 +30,15 @@ ME=`readlink -f $0`
 WHERE_AM_I=`dirname $ME`
 
 ############### EDIT ME ##################
-NAME="ubuzima" # change to your project name
+NAME="RapidSMS-Rwanda" # change to your project name
 DAEMON=$WHERE_AM_I/rapidsms
 DAEMON_OPTS=""
 RUN_AS=root
 APP_PATH=$WHERE_AM_I
+
 ROUTER_PID_FILE=/var/run/${NAME}_router.pid
 #WEBSERVER_PID_FILE=/var/run/${NAME}_webs.pid
-WEBSERVER_PORT=54345
-#WEBSERVER_IP=127.0.0.1
+WEBSERVER_PORT=8000
 WEBSERVER_IP=0.0.0.0
 
 # By default both router and webserver are started
@@ -60,28 +60,20 @@ do_start() {
         echo -n "Starting router for $NAME... "
         start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --pidfile $ROUTER_PID_FILE  --make-pidfile --exec $DAEMON -- route $DAEMON_OPTS
         echo "Router Started"
+	#echo $DAEMON
         sleep 2
     fi
     
     if [ "${START_WEBSERVER}" -eq 1 ] ; then
-        echo -n "Starting webserver and FCGI processes for $NAME... "
-        #start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --exec $DAEMON -- runserver $WEBSERVER_IP:$WEBSERVER_PORT
-        #start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --exec $DAEMON -- runfcgi protocol=scgi host=$WEBSERVER_IP port=$WEBSERVER_PORT
-	/usr/local/rapidsms/rapidsms runfcgi protocol=scgi host=127.0.0.1 port=54345 || echo Failed to start.
-        echo "Webserver and FCGI processes started"
+        echo -n "Starting webserver for $NAME... "
+        start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --exec $DAEMON -- runserver $WEBSERVER_IP:$WEBSERVER_PORT
+        echo "Webserver Started"
     fi
 }
 
 hard_stop_runserver() {
     echo "Hard stopping runserver"
     for i in `ps aux | grep -i "rapidsms runserver" | grep -v grep | awk '{print $2}' ` ; do
-        kill -9 $i
-    done
-}
-
-hard_stop_runfcgi() {
-    echo "Hard stopping runfcgi"
-    for i in `ps aux | grep -i "rapidsms runfcgi" | grep -v grep | awk '{print $2}' ` ; do
         kill -9 $i
     done
 }
@@ -101,7 +93,6 @@ do_hard_restart() {
 
 do_hard_stop_all() {
     hard_stop_runserver
-    hard_stop_runfcgi
     hard_stop_router
 }
 
@@ -114,10 +105,9 @@ do_stop() {
         sleep 2
     fi
     if [ "${START_WEBSERVER}" -eq 1 ] ; then
-        echo -n "Stopping webserver and FCGI processes for $NAME... "
+        echo -n "Stopping webserver for $NAME... "
         hard_stop_runserver
-        hard_stop_runfcgi
-        echo "Webserver and FCGI processes stopped"
+        echo "Webserver Stopped"
     fi
 }
 

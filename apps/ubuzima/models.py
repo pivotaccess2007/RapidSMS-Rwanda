@@ -5,7 +5,7 @@ from apps.reporters.models import Reporter
 from apps.locations.models import Location
 from django.utils.translation import ugettext as _
 import datetime
-
+from decimal import Decimal
 
 def fosa_to_code(fosa_id):
     """Given a fosa id, returns a location code"""
@@ -64,7 +64,8 @@ class FieldType(models.Model):
     
 class Patient(models.Model):
     location = models.ForeignKey(Location)
-    national_id = models.CharField(max_length=20, unique=True)
+    national_id = models.CharField(max_length = 20, unique = True)
+    telephone = models.CharField(max_length = 13 , null = True)
     
     def __unicode__(self):
         return "%s" % self.national_id
@@ -95,6 +96,17 @@ class Field(models.Model):
         permissions = (
             ("can_view", "Can view"),
         )
+
+    @classmethod
+    def get_risk_fieldtypes(cls):
+    	codes = FieldType.objects.filter(key__in = ['af', 'ch', 'ci', 'cm', 'co', 'di', 'ds', 'fe', 'fp', 'he', 'hy', 'ja', 'ma', 'mc',\
+						 'ns', 'oe', 'pa', 'pc', 'ps', 'rb', 'sa', 'sc', 'sl', 'un', 'vo', 'la'])
+    	return codes
+
+    def get_report(self):
+   	try:
+   		return self.report_set.all()[0]
+    	except: return None
     
 class Report(models.Model):
     # Constants for our reminders.  Each reminder will be triggered this many days 
@@ -106,6 +118,13 @@ class Report(models.Model):
     DAYS_EDD = 7
     DAYS_ON_THE_DOT = 0
     DAYS_WEEK_LATER = -7
+    DAYS_PNC1 = 2
+    DAYS_PNC2 = 6
+    DAYS_PNC3 = 28
+    DAYS_MONTH6 = 180
+    DAYS_MONTH9 = 270
+    DAYS_MONTH18 = 540
+    DAYS_MONTH24 = 720
 
     reporter = models.ForeignKey(Reporter)
     location = models.ForeignKey(Location)
@@ -144,11 +163,10 @@ class Report(models.Model):
 
         return summary
     def has_dups(self):
-    	if len(Report.objects.filter(type=self.type,patient=self.patient,date=self.date)) > 0:	return True
-    	return False
+    	return Report.objects.filter(type=self.type,patient=self.patient,date=self.date).exists()
     def rep_fields(self):
-    	flds=[]
-    	rep_flds=self.fields.all()
+    	flds = []
+    	rep_flds = self.fields.all()
 	for fld in rep_flds:
     		flds.append(fld)
     	return flds
@@ -350,27 +368,43 @@ class Report(models.Model):
         return (start, end)
 
     def is_risky(self):
-        risk = FieldType.objects.filter(key__in =['ps','ds','sl','pc','af','ja','cm','mc','ns','fp','oe','un','ch','sa','co','vo','he','pa','rb','hy','fe','ma','di','ci','sc'])
-        preg   = [ReportType.objects.get(name = 'Pregnancy'),ReportType.objects.get(name = 'RISK'),ReportType.objects.get(name = 'ANC')]
-        all_risks=[]
-        #for me in Report.objects.filter(patient = self.patient, type__in = preg):
-	for r in self.fields.all(): 
-		if r.type in risk: return True#all_risks.append(r.type)		
-    	#if len(all_risks)!=0: return True
-        return False
+        risk = Report.objects.filter( patient = self.patient , fields__in = Field.objects.filter(type__in = Field.get_risk_fieldtypes()) )
+        return risk.exists()
 
     def is_high_risky_preg(self):
-    	risk = FieldType.objects.filter(key__in =['ps','ds','sl','ja','fp','un','sa','co','he','pa','ma','sc'])
-    	preg   = [ReportType.objects.get(name = 'Pregnancy'),ReportType.objects.get(name = 'RISK'),ReportType.objects.get(name = 'ANC')]
-        all_risks=[]
-        for me in Report.objects.filter(patient = self.patient, type__in = preg):
-            for r in me.fields.all(): 
-    	    	if r.type in risk: all_risks.append(r.type)
-    	if len(all_risks)!=0: return True
-        return False
+    	risk = Report.objects.filter( patient = self.patient, fields__in = Field.objects.filter( type__in = FieldType.objects.filter(key__in =['ps','ds','sl','ja','fp','un','sa','co','he','pa','ma','sc','la'])))
+    	return risk.exists()
 
     def show_edd(self):
     	return self.calculate_edd(self.date)
+
+    def get_child_id(self):
+    	try:	return { 'chino': int(self.fields.get(type__key = "child_number").value), 'dob': self.date, 'mother': self.patient }
+    	except:	return None
+    def get_field(self,key):
+    	try:	return self.fields.get(type__key = key)
+    	except:	return None
+    def get_sex(self):
+    	try:	return self.fields.filter(type__key__in = ['bo','gi'])[0]
+    	except:	return None	
+
+    def get_child(self):
+    	try:
+    		chino, dob, mother = self.get_child_id()['chino'], self.get_child_id()['dob'], self.get_child_id()['mother'] 
+    		chihe = Report.objects.filter( type__name = "Child Health", date = dob , patient = mother , fields__in = Field.objects.filter(type__key = 'child_number',   value = Decimal(chino))).order_by('created')
+
+    		ans, track = {},[]
+    		for r in chihe:
+    			track.append( {'date': r.created, 'risk': r.fields.filter(type__category__name = 'Risk'), 'weight': r.get_field('child_weight'), 'muac': r.get_field('muac') })
+
+    		ans['id'] = self.get_child_id()
+    		ans['birth'] = {'date': self.date, 'risk': self.fields.filter(type__category__name = 'Risk'), 'weight': self.get_field('child_weight'), 'muac': self.get_field('muac'), 'sex': self.get_sex() }
+    		ans['track'] = track
+		ans['log'] = chihe
+   		return ans
+    	except:	None
+    
+    	
     	    
 class TriggeredText(models.Model):
     """ Represents an automated text response that is returned to the CHW, SUP or district SUP based 
@@ -600,11 +634,28 @@ class Refusal(models.Model):
             ("can_view", "Can view"),
         )
 
+class ErrorType(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    def __unicode__(self):
+        return self.description
+
+    class Meta:
+        
+        # define a permission for this app to use the @permission_required
+        # in the admin's auth section, we have a group called 'manager' whose
+        # users have this permission -- and are able to see this section
+        permissions = (
+            ("can_view", "Can view"),
+        )
+
 class ErrorNote(models.Model):
     '''This model is used to record errors made by people sending messages into the system, to facilitate things like studying which format structures are error-prone, and which reporters make the most errors, and other things like that.'''
 
     errmsg  = models.TextField()
-    errby   = models.ForeignKey(Reporter, related_name = 'erring_reporter')
+    type = models.ForeignKey(ErrorType, related_name='error_category')
+    errby   = models.ForeignKey(Reporter, null =True , related_name = 'erring_reporter')
+    identity = models.CharField(max_length=13, null=True)
     created = models.DateTimeField(auto_now_add = True)
 
     def __unicode__(self):
@@ -642,10 +693,22 @@ class UserLocation(models.Model):
 class TriggeredAlert(models.Model):
     """
                         Logs alerts that have been sent. """
+
+    RESPONSE_YES = 'YES'
+    RESPONSE_NO = 'NO'
+    RESPONSE_PO = 'PO'
+    RESPONSE_NR = 'NR'
+    RESPONSE_CHOICES = ( (RESPONSE_YES, "Responded"),
+                            (RESPONSE_NO, "Not Responded"),
+			    (RESPONSE_PO, "Positive Outcome"),
+                            (RESPONSE_NR, "Not Required or No Returns"))
+    
     reporter = models.ForeignKey(Reporter)
     report = models.ForeignKey(Report, related_name="alerts", null=True)
     trigger=models.ForeignKey(TriggeredText)
     date = models.DateTimeField(auto_now_add=True)
+    response = models.CharField(max_length=3, choices=RESPONSE_CHOICES, default = "NR",
+                                   help_text="These choices will be used only where applicable, otherwise choice is initialized to Not Required.")
     def __unicode__(self):
 		return '%s : "%s"' % (str(self.id), str(self.trigger))
 

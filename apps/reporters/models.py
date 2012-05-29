@@ -108,7 +108,7 @@ class Reporter(models.Model):
 	#End of Supervisors!
 	#Expired reporter 
     def is_expired(self):
-    	if not self.last_seen() or self.last_seen().date() < datetime.date.today()-datetime.timedelta(16):
+    	if not self.last_seen() or self.last_seen().date() < datetime.date.today()-datetime.timedelta(30):
     		return True
     	return False
 	

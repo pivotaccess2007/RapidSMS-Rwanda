@@ -7,6 +7,8 @@ import urllib2
 import time
 import datetime
 from optparse import make_option
+from ubuzima.smser import *
+import calendar
 
 class Command(BaseCommand):
     help = "Checks and triggers all reminders.  This command should be run daily via cron"
@@ -92,6 +94,58 @@ class Command(BaseCommand):
         except Reporter.DoesNotExist:
             pass
 
+    def check_pnc_reminders(self, today, days, reminder_type, to_sup=False, to_mother=False):
+    	try:
+	    	message, receivers = reminder_type.message_kw, []
+	    	pending = Report.objects.filter(type__name = "Birth", date = today - datetime.timedelta(days = days), reminders = None)
+	    	# for each one, send a reminder
+	    	for report in pending:
+	    		try:
+		    		if to_sup:
+		    			for x in Reporter.objects.filter(location=report.reporter.location, groups__title="Supervisor"):
+		    				receivers.append(x)
+		    		else:	receivers.append(report.reporter)
+	     			for reporter in receivers:
+	    				if reporter.language == 'en':
+	    					message = reminder_type.message_en
+	    				elif reporter.language == 'fr':
+	    					message = reminder_type.message_fr
+	    				message = message % (report.patient.national_id,report.date_string)
+	    				print "sending reminder to %s of '%s'" % (report.reporter.connection().identity, message)
+	    				if not self.dry:	self.send_message(report.reporter.connection(), message)
+	     			
+	     		except :	continue
+    			if not self.dry:	report.reminders.create(type=reminder_type, date=datetime.datetime.now(), reporter=report.reporter)
+	    		if to_mother:
+	    			if not self.dry:
+	    				if report.patient.telephone:	Smser().send_message(report.patient.telephone, message % (report.patient.national_id,report.date_string))
+    	except:	pass
+    
+
+    def check_feedback(self):
+    	try:
+	    	reporters = Reporter.objects.all()
+	    	
+	    	for reporter in reporters:
+	    		try:
+   				reminder_type = ReminderType.objects.get(name = 'Active Reporter Feedback')
+    				message = reminder_type.message_kw
+    				message = message % Report.objects.filter(reporter=reporter, created__month = datetime.date.today\
+									().month, created__year = datetime.date.today().year).count()
+	    			if reporter.last_seen().date() < datetime.date.today() - datetime.timedelta(days=30):
+	    				reminder_type = ReminderType.objects.get(name = 'Inactive Reporter Feedback')
+    					message = reminder_type.message_kw
+	   				if reporter.language == 'en':	message = reminder_type.message_en
+	    				elif reporter.language == 'fr':	message = reminder_type.message_fr
+	    				
+	   			if not self.dry:	self.send_message(reporter.connection(), message)
+	    		except:	continue
+
+	    		if not self.dry:	Reminder.objects.create(type=reminder_type, date=datetime.datetime.now(), reporter=reporter)
+    	
+    	except:	pass	
+    	
+
     def check_expired_reporters(self):
         # get our reminder
         reminder_type = ReminderType.objects.get(pk=6)
@@ -157,9 +211,40 @@ class Command(BaseCommand):
         reminder_type = ReminderType.objects.get(name = 'Week After Due Date')
         self.check_reminders(today, Report.DAYS_WEEK_LATER, reminder_type)
 
+    	# Two days after Birth date
+        reminder_type = ReminderType.objects.get(name = 'PNC visit after 2 days of Delivery Date')
+        self.check_pnc_reminders(today, Report.DAYS_PNC1, reminder_type,to_sup=True,to_mother=True)
+    	
+    	# Six days after Birth date
+        reminder_type = ReminderType.objects.get(name = 'PNC visit after 6 days of Delivery Date')
+        self.check_pnc_reminders(today, Report.DAYS_PNC2, reminder_type,to_sup=True,to_mother=True)
+
+    	# 28 days after Birth date
+        reminder_type = ReminderType.objects.get(name = 'PNC visit after 28 days of Delivery Date')
+        self.check_pnc_reminders(today, Report.DAYS_PNC3, reminder_type,to_sup=True,to_mother=True)
+
+    	# 6 months after Birth date
+        reminder_type = ReminderType.objects.get(name = 'Child Health after 6 months of Delivery Date')
+        self.check_pnc_reminders(today, Report.DAYS_MONTH6, reminder_type,to_sup=True,to_mother=True)
+
+   	# 9 months after Birth date
+        reminder_type = ReminderType.objects.get(name = 'Child Health after 9 months of Delivery Date')
+        self.check_pnc_reminders(today, Report.DAYS_MONTH9, reminder_type,to_sup=True,to_mother=True)
+
+   	# 18 months after Birth date
+        reminder_type = ReminderType.objects.get(name = 'Child Health after 18 months of Delivery Date')
+        self.check_pnc_reminders(today, Report.DAYS_MONTH18, reminder_type,to_sup=True,to_mother=True)
+
+    	# 24 months after Birth date
+        reminder_type = ReminderType.objects.get(name = 'Child Health after 24 months of Delivery Date')
+        self.check_pnc_reminders(today, Report.DAYS_MONTH24, reminder_type,to_sup=True,to_mother=True)
+
         # EDD for SUPs
         reminder_type = ReminderType.objects.get(pk=5)
         self.check_reminders(today, Report.DAYS_SUP_EDD, reminder_type, to_sup=True)
+   	
+    	#Send monthly performance feedback messages
+   	if calendar.monthrange(today.year,today.month)[1] == today.day:	self.check_feedback()
 
         # Finally look for any reports who need reminders
         self.check_expired_reporters()

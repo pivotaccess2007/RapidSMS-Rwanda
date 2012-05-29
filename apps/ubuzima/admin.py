@@ -10,6 +10,8 @@ admin.site.register(ReminderType)
 admin.site.register(Reminder)
 admin.site.register(UserLocation)
 admin.site.register(TriggeredAlert)
+admin.site.register(ErrorType)
+admin.site.register(ErrorNote)
 
 class TriggerAdmin(admin.ModelAdmin):
     pass

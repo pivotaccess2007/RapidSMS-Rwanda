@@ -6,8 +6,9 @@
 <p>Oops. Your username and password didn't match. Please try again.</p>
 {% endif %}
 
-{% if user.is_authenticated %}
-<a href="javascript:history.go(-1)" ><span style="border: 1px solid #cef1f5;font-weight: bold;">Go Back</span></a>
+{% if user.is_authenticated %}	
+						<a href="javascript:history.go(-1)" ><span style="border: 1px solid #cef1f5;font-weight: bold;">Go Back</span></a>
+					
 <p>Oops. You do not have permission to view this section.</p>
 
 {% else %}

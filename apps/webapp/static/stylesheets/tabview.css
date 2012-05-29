@@ -14,7 +14,7 @@ background-image:url(../images/tab-bg.png);
   float: left;
   display: block;
 
-  width:  140px;
+  width:  113px;
   text-align: center;
 
   height: 20px;
@@ -52,5 +52,50 @@ div.TabView div.Pages div.Page
 
 div.TabView div.Pages div.Page div.Pad
 {
-  padding: 3px 5px;
+  padding: 0px 0px;
+}
+
+#nav {
+	list-style: none;
+	padding: 0;
+	margin: 0px 0 0px 0;
+	background: #00A4A4 repeat-x;
+	border-bottom:4px solid #006868;
+	display: block;
+	overflow: hidden;
+	font-size: 0.9em;
+	height:33px;
+	text-transform:capitalize;
+	
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+	
+	-webkit-transition: background-color 0.3s linear;
+	-moz-transition: background-color 0.3s linear;
+	-o-transition: background-color 0.3s linear;
+}
+#nav li {
+	display: inline;
+}
+#nav li a {
+	display: block;
+	float: left;
+	padding: 15px 25px;
+	color: white;
+	text-decoration: none;
+}
+#nav li a:hover{
+	background: #006868 repeat-x;
+	
+}
+
+#load {
+	display: none;
+	float: right;
+	margin: 15px 15px 15px 15px;
+	background: url(../images/ajax-loader.gif);
+	width: 83px;
+	height: 13px;
+	text-indent: -9999em;
 }
