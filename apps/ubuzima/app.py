@@ -277,16 +277,17 @@ class App (rapidsms.app.App):
 
     def parse_msg(self,msg):
     	m = re.compile(self.sep).split(msg)
-    	if m[0].lower() in ["bir","chi"]:
-    		m[1],m[2],m[3] = self.replace_o_i(m[1]),self.replace_o_i(m[2]),self.replace_o_i(m[3])
-    	if m[0].lower() not in ["amb","hc"]:
-    		m[1],m[2] = self.replace_o_i(m[1]),self.replace_o_i(m[2])
-    	else:
-   		m[1]= self.replace_o_i(m[1])
-    	for n in m:
-    		if re.search("(kg|kilo|kilogram)", n, re.IGNORECASE): m[m.index(n)]=self.replace_o_i(n)
-    	for n in m:
-    		if re.search("(cm|cent|centimeter)", n, re.IGNORECASE): m[m.index(n)]=self.replace_o_i(n)
+    	if len(m) > 1:
+	    	if m[0].lower() in ["bir","chi"] and len(m) > 3:
+	    		m[1],m[2],m[3] = self.replace_o_i(m[1]),self.replace_o_i(m[2]),self.replace_o_i(m[3])
+	    	if m[0].lower() not in ["amb","hc"] and len(m) > 2:
+	    		m[1],m[2] = self.replace_o_i(m[1]),self.replace_o_i(m[2])
+	    	else:
+	   		m[1]= self.replace_o_i(m[1])
+	    	for n in m:
+	    		if re.search("(kg|kilo|kilogram)", n, re.IGNORECASE): m[m.index(n)]=self.replace_o_i(n)
+	    	for n in m:
+	    		if re.search("(cm|cent|centimeter)", n, re.IGNORECASE): m[m.index(n)]=self.replace_o_i(n)
     	pmsg=""
     	for n in m: pmsg=pmsg+" "+n
     	return  pmsg.strip()

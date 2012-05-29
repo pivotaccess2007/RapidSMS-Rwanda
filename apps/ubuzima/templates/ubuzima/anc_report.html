@@ -1,0 +1,1051 @@
+{% extends base_template %}
+{% block title %}Report Log{% endblock %}
+
+{% block javascripts %}
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/layout.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/modules.css" ></link>
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/tabview.css" ></link>
+<link rel="stylesheet" type="text/css"  href="/static/webapp/stylesheets/stats.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.css"></link>
+<style type="text/css" rel="stylesheet">
+.table-design thead ,.table-design th , .table-design td {
+	border:solid black 1px
+	}
+</style>
+
+<!--[if IE]><script language="javascript" type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery-1.4.1.min.js"></script>
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script language="javascript" language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.multi.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/tabview.js"></script>
+<script type="text/javascript"  src="/static/webapp/javascripts/stats.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/downloadify.min.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/swfobject.js"></script>
+
+<style type="text/css">
+#table-design thead ,#table-design th , #table-design td {
+	border:solid black 1px
+	}
+
+</style>
+
+<script language="javascript" type="text/javascript"> 
+//Draw HTML Table
+jQuery(function() {
+  jQuery("#table-design").table2csv({
+   callback: function (csv) {
+
+	var j$ = jQuery.noConflict();
+      j$(document).ready( function () {
+        //var exportdata = j$("#table-design").html();
+ 
+        Downloadify.create('downloadify',{
+              filename: function(){
+                  return j$('#filename').val();
+              },
+              data: function(){
+                  return csv;
+              },
+              swf: "/static/webapp/javascripts/downloadify/media/downloadify.swf",
+              downloadImage:"/static/webapp/javascripts/downloadify/images/download.png",
+              width: 100,
+              height: 30,
+              transparent: true,
+              append: false
+          });
+      });
+     //http://ugeshgali.blogspot.com/2012/01/export-to-excel-in-salesforce-from.html
+    //alert(csv);
+	//window.location.href = 'data:text/csv;charset=UTF-8,'+ encodeURIComponent(csv);
+   }
+  });
+ });
+function showTooltip(x, y, contents) {
+	
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#eee',
+            opacity: 1.0
+        }).appendTo("body").fadeIn(200);
+    }
+
+
+function deroulement(form)
+  {
+	
+	path=document.URL;	
+	
+if (form.navlocation.value == "")
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			
+			window.location=path;
+			}
+       }
+	
+else{
+			var loc = form.navlocation.value.split('.')[1];
+			if ( loc == 'Health Centre') loc = "Location";
+			
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			path=path.replace(/(loc=)[^\&]+/, '$1' + form.navlocation.value.split('.')[0].toLowerCase());
+			if(path.indexOf("?") < 0 && path.indexOf("start_date") < 0 )window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else if(path.indexOf("start_date") < 0 )window.location=path+'&start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else window.location=path;
+	}	
+
+ }
+
+function fetch_stats_indics(indic){
+	var path=document.URL;
+	
+	if (path.indexOf(indic) < 0 ) {
+		 if (window.location.pathname.split("dash")[1] !="") window.location=path.replace(window.location.pathname.split("dash")[1], '/'+indic);
+		 else window.location=path.replace(window.location.pathname, window.location.pathname+'/'+indic);
+		}
+	else window.location=path;
+}
+
+
+
+
+
+
+</script>
+
+
+
+{% endblock %}
+
+<!-- {% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+	<li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %} -->
+
+{% block content %}
+
+<div>
+    <form name="filtering" class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                
+                <tr>
+			<th>Start</th><th ><input style="background-color: white"  type="text" id="pickstartdate" value="{{ start_date }}"  name="start_date" 					readonly="readonly"  onFocus="displayCalendar(form.start_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>End</th><th><input style="background-color: white" type="text" id="pickenddate" value="{{ end_date }}"  name="end_date" 					readonly="readonly"  onFocus="displayCalendar(form.end_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>Location Navigation</th><th><select style="background-color: white" name="navlocation" id="navlocation" >
+						{% if sel %}<option value="{{ sel.id }}.{{sel.type.name}}"  								selected="selected" >{{ sel.name }}&nbsp;{{ sel.type.name}}</option> {% else %}
+							<option value="" selected="selected">{{ usrloc.location.name }}</option>{% endif %}
+						{%  for loc in locs %}
+							<option value="{{ loc.id }}.{{loc.type.name}}" {% if loc.selected  %} 								selected="selected" {% endif %}>{{ loc.name }}</option>
+						{%  endfor %}
+						
+                				
+            					</select></th>
+			<th></th><th></th></tr>
+            </thead>
+            <tbody>
+        <tr>	<td colspan="4">
+		<a href={{request.path}}>Rwanda</a>
+		{% if prv %}
+		&nbsp;&gt;<a href={{request.path}}?province={{prv.id}}>{{ prv.name }}&nbsp;{{ prv.type.name }}</a>
+		{% else %}
+			{% if dst %}&nbsp;&gt;<a href={{request.path}}?province={{dst.parent.id}} >{{ dst.parent.name }}&nbsp;{{ dst.parent.type.name }}</a> 
+			{% else %}
+			{% if lxn %}&nbsp;&gt;<a href={{request.path}}?province={{lxn.province.id}} >{{ lxn.province.name }}&nbsp;{{ lxn.province.type.name }}</a>			{% endif %}
+			{% endif %}
+		{% endif %}
+
+		{% if dst %}
+		&nbsp;&gt;<a href={{request.path}}?district={{dst.id}}>{{ dst.name }}&nbsp;{{ dst.type.name }}</a>
+		{% else %}
+		{% if lxn %}&nbsp;&gt;<a href={{request.path}}?district={{lxn.district.id}} >{{ lxn.district.name }}&nbsp;{{ lxn.district.type.name }}</a>
+		{% endif %}
+		{% endif %}
+		
+		{% if lxn %}
+		&nbsp;&gt;<a href={{request.path}}?location={{lxn.original.id}}>{{ lxn.original.name }}&nbsp;{{ lxn.original.type.name }}</a>
+		{% endif %}
+		
+            	<td> <!-- <input type="button" value="Update Filters"  onClick="return deroulement(this.form);"/> --> </td>
+	   	<td> <!-- <a href={{request.url}}?csv{%if postqn%}&{{postqn}}{%endif%}>Export Reports Log</a> --> </td>
+                </tr>
+		 <tr>
+			<td><!--Table--></td><td ><!--Graph--></td><td><!--Map--></td><td></td>
+			<td></td><td></td><td></td><td></td>
+		</tr>
+		</tbody>
+        </table>
+    </form>
+<div class="tmp">
+
+
+<div>
+    
+    <div class="clear-hack"></div>
+</div>
+    
+    <table width="100%">
+        
+        <tbody>
+            
+<tr>
+    <td height="21" colspan="5" >
+
+	<div class="TabView" id="TabView">
+	<!-- *** Tabs ************************************************************** -->
+
+<div class="Tabs" style="width: 100%;">
+
+ <a onclick="return fetch_stats_indics('bir');">Births</a> <a onclick="return fetch_stats_indics('pre');">Pregnancies</a><a onclick="return fetch_stats_indics('anc');">ANCs</a><a onclick="return fetch_stats_indics('pnc');">PNCs</a><a onclick="return fetch_stats_indics('ris');">Risks</a><a onclick="return fetch_stats_indics('chi');">Child Health</a><a onclick="return fetch_stats_indics('de');">Death</a><a onclick="return fetch_stats_indics('admin');">Administrative</a>
+  
+</div>
+<!-- End Tabs -->
+
+<!-- *** Pages ************************************************************* -->
+
+<div class="Pages" style="width: 100%; height: 400px;">
+
+<!-- Page Births -->
+<div class="Page"> 
+	
+	<div class="Pad">
+		
+  	</div>
+</div>
+
+<!--End Page Births -->
+
+
+<!-- Page Pregnancies -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="100%">
+  <tr>
+ <td><table width="100%">
+<tr><td colspan="2">&nbsp;&nbsp;</td></tr>
+<tr><td><b>Total Pregnancies:</b>&nbsp;<b>{{track.pregnancy.total}}</b></td><td><b>Expected Deliveries:</b>&nbsp;<b>{{track.pregnancy.expected_del_total}}</b></td></tr>
+<tr>
+<td width="50%"><div style="height: 200px;"><table width="100%">
+        <thead>
+            <tr style="background-color:#2fa5d1;height:20px;color:white;FONT-SIZE: 12px;font-family: verdana;font-weight:bold;">
+                <th ><b>Indicator</b></th><th><b>Value</b></th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+           
+	<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+	<tr><td>Delivered at Health Facility</td> <td>{{track.births.hosp_del_total}}</td> </tr>
+
+	<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+	<tr><td>Delivered en Route</td> <td>{{track.births.en_route_del_total}}</td> </tr>
+	 <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr>
+                <td><!--<a href="important/html/{{stat.id}}{%if postqn%}?{{postqn}}{%endif%}"></a>-->Delivered at Home</td>
+                <td>{{track.births.home_del_total}}</td>
+               <!-- <td>[<a href="important/csv/{{stat.id}}{%if postqn%}?{{postqn}}{%endif%}">export</a>]</td>-->
+            </tr>
+
+	<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+	<tr><td>Delivered at Unknown</td> <td>{{track.births.unknown_del_total}}</td> </tr>
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table></div></td>
+
+<td width="50%"><div id="divPieChart" style="padding:10px; "></div></td>
+</tr>
+
+ </table></td>
+</tr>  
+</table>
+  </div>
+  </div>
+<!--End Page Pregnancies -->
+
+<!-- Page ANCs -->
+  <div class="Page"> 
+  <div class="Pad">
+			<div id="wrapper" style="width:100%;">
+    <ul id="nav">
+        <li><a href=#" title="table" >Table</a></li>
+        <li><a href="#" title="graph">Graph</a></li>
+        <li><a href="#" title="map">Map</a></li>
+	<li><a href="#" title="map">Log</a></li>         
+    </ul>
+    	<div id="placeholder"></div>
+	<div id="table">
+
+		<div id="content">
+			<form>
+        		   <p style ="display:none">
+            			<label for="filename" >Filename</label><br />
+            			<input type="text" name="filename" value="exportfile.xls" id="filename" />
+        		  </p>
+        		  <p id="downloadify" style="margin-left:100px;">
+            			You must have Flash 10 installed to download this file.
+        		  </p>
+    			</form>    	
+        		<div id="table1"  ></div></br><br/>
+
+                       <!--- End of table1 -->
+			<form>
+        		   <p style ="display:none">
+            			<label for="filename" >Filename</label><br />
+            			<input type="text" name="filename" value="exportfile.xls" id="filename" />
+        		  </p>
+        		  <p id="downloadify" style="margin-left:100px;">
+            			You must have Flash 10 installed to download this file.
+        		  </p>
+    			</form>
+			<div id="table2"  ></div></br><br/>
+			<!-- End of table2 -->
+			<form>
+        		   <p style ="display:none">
+            			<label for="filename" >Filename</label><br />
+            			<input type="text" name="filename" value="exportfile.xls" id="filename" />
+        		  </p>
+        		  <p id="downloadify" style="margin-left:100px;">
+            			You must have Flash 10 installed to download this file.
+        		  </p>
+    			</form>
+			<div id="table3"  ></div></br><br/>
+			<!-- End of table3 -->
+		       <form>
+        		   <p style ="display:none">
+            			<label for="filename" >Filename</label><br />
+            			<input type="text" name="filename" value="exportfile.xls" id="filename" />
+        		  </p>
+        		  <p id="downloadify" style="margin-left:100px;">
+            			You must have Flash 10 installed to download this file.
+        		  </p>
+    		      </form>
+			<div id="table4"  ></div></br><br/>
+			<!-- End of table 4 -->
+    		</div>
+	</div>
+	<div id="graph">
+		<div id="content">    	
+        		<h2 >Comparison of ANC Report Statistics in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+			<div id="placeholder_l" style=" width: 100%;height:400px;"></div>
+			<h2 >Variation of ANC Statistics in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+			<div id="placeholder_m" style=" width: 100%;height:400px;"></div>
+			<h2 >Variation of Continum Rate and Drop Out Rate Statistics of ANC2 in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+			<div id="placeholder_anc2cd" style=" width: 100%;height:400px;"></div>
+			<h2 >Variation of Continum Rate and Drop Out Rate Statistics of ANC3 in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+			<div id="placeholder_anc3cd" style=" width: 100%;height:400px;"></div>
+			<h2 >Variation of Continum Rate and Drop Out Rate Statistics of ANC4 in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+			<div id="placeholder_anc4cd" style=" width: 100%;height:400px;"></div>
+    		</div>
+	</div>
+	<div id="map">
+
+		<p>Hi Map! "</p>
+		<div id="content">    	
+        		<p>Mapsdhsjd!</p>
+    		</div>
+	</div>
+	<div id="log">
+
+		
+		<div id="content">    	
+        		
+    		</div>
+	</div>
+    
+</div>
+			
+		
+
+		
+  </div>
+  </div>
+<!--End Page ANCs -->
+
+<!-- Page PNCs -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page PNCs -->
+
+<!-- Page Maternal Risks -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="675">
+  <tr>
+<td> Maternal Risks</td>
+
+</tr>
+</table>
+  </div>
+  </div>
+<!--End Page Maternal Risks -->
+
+<!-- Page Child Health -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="675">
+  <tr>
+<td> Child Health</td>
+</tr>
+</table>
+  </div>
+  </div>
+<!--End Page Child Health -->
+
+<!-- Page Death -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="675">
+  <tr>
+<td> Death </td>
+</tr>
+</table>
+  </div>
+  </div>
+<!--End Page Death -->
+
+
+
+</div>
+
+<!-- End pages -->
+	</div>
+    
+</td>
+
+</tr>
+
+        </tbody>
+        <tfoot>
+            
+
+        </tfoot>
+    </table><table width="100%"><tr><td colspan="5"><div id="divImportant" style="width:100%;"></div></td></tr></table>
+   
+    
+<div>
+    <!--
+    <div>
+        <table class="hindics" width="100%">
+            <thead>
+                <tr class="smallhead"><th colspan="3">RapidSMS Data</th></tr>
+                <tr><th>Description</th><th>Rate</th><th></th></tr>
+            </thead>
+            <tbody>
+                {# for hind in hindics.object_list #}
+                <tr><td><a
+                        href="indicator/{#hind.id#}/html?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">{#hind.proper_name#}</a></td><td>{#hind.instances_count#}</td><td>[<a
+                        href="indicator/{#hind.id#}/csv?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">export</a>]</td></tr>
+                {# endfor #}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">{# paginator hindics #}</td>
+                </tr>
+                <tr>
+                    <td colspan="3">Matching Reports: {# hindics.paginator.count #}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    -->
+	<div class="clear-hack"></div>
+</div>
+
+
+</div>
+
+{% block tabview %}
+
+<script type="text/javascript">
+
+
+tabview_switch('TabView',3);
+
+
+var locs = "{% for l in locs %} {% if not forloop.first %},{% endif %}{{l.name}}-{{l.id}}-{{l.type}} {% endfor %}".split(",") ;
+var annot="{{annot_l}}";
+
+var month_names = ["Month", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+var months_b = "{% for m in track.months %} {% if not forloop.first %},{% endif %}{{m}} {% endfor %}".split(",") ;
+
+
+if (annot.split(",")[0] == "location__parent__parent__parent__name"){
+var anc1 = jQuery.parseJSON('{ {% for tr in track.items.anc1 %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__parent__name}}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), anc2 = jQuery.parseJSON('{ {% for tr in track.items.anc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),anc3 = jQuery.parseJSON('{ {% for tr in track.items.anc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),anc4 = jQuery.parseJSON('{ {% for tr in track.items.anc4 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc2 = jQuery.parseJSON('{ {% for tr in track.items.eddanc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc3 = jQuery.parseJSON('{ {% for tr in track.items.eddanc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc4 = jQuery.parseJSON('{ {% for tr in track.items.eddanc4 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.items.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+}else if(annot.split(",")[0] == "location__parent__parent__name"){
+	var anc1 = jQuery.parseJSON('{ {% for tr in track.items.anc1 %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__name}}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), anc2 = jQuery.parseJSON('{ {% for tr in track.items.anc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),anc3 = jQuery.parseJSON('{ {% for tr in track.items.anc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),anc4 = jQuery.parseJSON('{ {% for tr in track.items.anc4 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc2 = jQuery.parseJSON('{ {% for tr in track.items.eddanc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc3 = jQuery.parseJSON('{ {% for tr in track.items.eddanc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc4 = jQuery.parseJSON('{ {% for tr in track.items.eddanc4 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.items.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+	}else if(annot.split(",")[0] == "location__name"){
+	var anc1 = jQuery.parseJSON('{ {% for tr in track.items.anc1 %} {% if not forloop.first %},{% endif %} "{{tr.location__name}}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'), anc2 = jQuery.parseJSON('{ {% for tr in track.items.anc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),anc3 = jQuery.parseJSON('{ {% for tr in track.items.anc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),anc4 = jQuery.parseJSON('{ {% for tr in track.items.anc4 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc2 = jQuery.parseJSON('{ {% for tr in track.items.eddanc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc3 = jQuery.parseJSON('{ {% for tr in track.items.eddanc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),eddanc4 = jQuery.parseJSON('{ {% for tr in track.items.eddanc4 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.items.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }');
+	}
+
+
+var anc1_m = jQuery.parseJSON('{ {% for tr in track.items_m.anc1_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),anc2_m = jQuery.parseJSON('{ {% for tr in track.items_m.anc2_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),anc3_m = jQuery.parseJSON('{ {% for tr in track.items_m.anc3_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),anc4_m = jQuery.parseJSON('{ {% for tr in track.items_m.anc4_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),eddanc2_m = jQuery.parseJSON('{ {% for tr in track.items_m.eddanc2_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),eddanc3_m = jQuery.parseJSON('{ {% for tr in track.items_m.eddanc3_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),eddanc4_m = jQuery.parseJSON('{ {% for tr in track.items_m.eddanc4_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'), tot_m = jQuery.parseJSON('{ {% for tr in track.items_t %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }');
+
+var anc1_c =[] , anc2_c = [], ticks  = [], anc3_c = [], anc4_c = [], eddanc2_c = [], eddanc3_c = [], eddanc4_c = [], eddanc2_doc = [], eddanc3_doc = [], eddanc4_doc = [], globaltot=0, anc1_tot=0,anc2_tot=0,anc3_tot=0,anc4_tot=0,eddanc2_tot=0, eddanc3_tot=0, eddanc4_tot=0,eddanc3_ptot=0, eddanc4_ptot=0, anc1_totp=0, anc2_totp=0, anc3_totp=0, anc4_totp=0, eddanc2_totp=0, eddanc3_totp=0, eddanc4_totp=0,eddanc3_ptotp=0, eddanc4_ptotp=0, eddanc2_dototp=0, eddanc3_dototp=0, eddanc4_dototp=0, eddanc3_pdototp=0, eddanc4_pdototp=0;
+
+
+var anc1_c_m =[] , anc2_c_m = [], ticks_m  = [], anc3_c_m = [], anc4_c_m = [],eddanc2_c_m = [], eddanc3_c_m = [], eddanc4_c_m = [], eddanc2_doc_m = [], eddanc3_doc_m = [], eddanc4_doc_m = [], globaltot_m=0,anc1_tot_m=0,anc2_tot_m=0,anc3_tot_m=0,anc4_tot_m=0,eddanc2_tot_m=0,eddanc3_tot_m=0, eddanc4_tot_m=0,eddanc3_ptot_m=0, eddanc4_ptot_m=0,anc1_totp_m=0,anc2_totp_m=0,anc3_totp_m=0,anc4_totp_m=0, eddanc2_totp_m=0, eddanc3_totp_m=0, eddanc4_totp_m=0,eddanc3_ptotp_m=0, eddanc4_ptotp_m=0, eddanc2_dototp_m=0, eddanc3_dototp_m=0, eddanc4_dototp_m=0, eddanc3_pdototp_m=0, eddanc4_pdototp_m=0;
+
+	var table = document.createElement('table');
+
+        var theader1_1 = "<thead><!--<tr><th></th><th colspan=2>ANC2</th><th colspan=4>ANC3</th><th colspan=4>ANC4</th></tr>-->";
+	var tdata1 = "";
+	var str1 = "<table id='table-design'>";
+	var theader1 = "<tr><th>Location</th><th>ANC1</th><th>ANC2</th><th>ANC3</th><th>ANC4</th><th>Total</th><th>ANC1(%)</th><th>ANC2(%)</th><th>ANC3(%)</th><th>ANC4(%)</th></tr></thead>";
+	
+	var table2 = document.createElement('table');
+
+	var theader2_1 = "<thead><tr><th></th><th colspan=2>ANC2</th><th colspan=4>ANC3</th><th colspan=4>ANC4</th></tr>";
+	var tdata2 = "";
+	var str2 = "<table id='table-design'>";
+	var theader2 = "<tr><th>Location</th><th> CR(%) </th><th> DOR(%) </th><th> CR(%) </th><th> DOR(%) </th><th> CR(%)/ANC2 </th><th> DOR(%)/ANC2 </th><th> CR(%) </th><th> DOR(%) </th><th> CR(%)/ANC3 </th><th> DOR(%)/ANC3 </th></tr></thead>";
+
+	
+
+
+	for ( var l in locs) {
+			var anc1_n,anc2_n,anc3_n,anc4_n,tot_n,anc1_np,anc2_np,anc3_np,anc4_np,eddanc2_n,eddanc3_n,eddanc4_n,eddanc2_np,eddanc3_np,eddanc4_np,eddanc3_pnp,eddanc4_pnp,eddanc2_dop,eddanc3_dop,eddanc4_dop,eddanc3_pdop,eddanc4_pdop;
+			
+			var loc_n = locs[l].trim().split("-")[0];
+			var loc_id = locs[l].trim().split("-")[1];
+			var loc_t = locs[l].trim().split("-")[2];
+			if ( loc_t == 'Health Centre') loc_t = "Location";
+			if (anc1[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) anc1_n = anc1[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else anc1_n = 0;
+			if (anc2[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) anc2_n = anc2[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]; 
+			else anc2_n = 0;
+			if (anc3[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) anc3_n = anc3[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else anc3_n = 0;
+			if (anc4[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) anc4_n = anc4[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else anc4_n = 0;
+                        if (eddanc2[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) eddanc2_n = eddanc2[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else eddanc2_n = 0;
+			if (eddanc3[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) eddanc3_n = eddanc3[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else eddanc3_n = 0;
+			if (eddanc4[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) eddanc4_n = eddanc4[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else eddanc4_n = 0;
+			if (tot[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) { 	
+				if (anc1_n != 0){
+					tot_n = tot[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]] + anc1[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+				}else{
+					tot_n = tot[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+				} 
+							anc1_np = Math.round((anc1_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2); 
+							anc2_np = Math.round((anc2_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							anc3_np = Math.round((anc3_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							anc4_np = Math.round((anc4_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc2_np = Math.round((anc2_n*100/eddanc2_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_np = Math.round((anc3_n*100/eddanc3_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_np = Math.round((anc4_n*100/eddanc4_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_pnp = Math.round((anc3_n*100/anc2_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_pnp = Math.round((anc4_n*100/anc3_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc2_dop = Math.round(((eddanc2_n-anc2_n)*100/eddanc2_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_dop = Math.round(((eddanc3_n-anc3_n)*100/eddanc3_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_dop = Math.round(((eddanc4_n-anc4_n)*100/eddanc4_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_pdop = Math.round(((anc2_n-anc3_n)*100/anc2_n)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_pdop = Math.round(((anc3_n-anc4_n)*100/anc3_n)* Math.pow(10,2))/Math.pow(10,2);
+				
+							}else { 
+
+							if (anc1_n != 0){
+								tot_n = anc1[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+							}else{
+								tot_n = 0;
+							}
+									anc1_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//fac_n*100/tot_n.toFixed(2); 
+									anc2_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//route_n*100/tot_n.toFixed(2);
+									anc3_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//home_n*100/tot_n.toFixed(2);
+									anc4_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//unk_n*100/tot_n.toFixed(2);
+									eddanc2_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_pnp = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_pnp = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc2_dop = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_dop = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_dop = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_pdop = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_pdop = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+								}
+			
+			anc1_c.push([l,anc1_np]);
+			anc2_c.push([l,anc2_np]);
+			anc3_c.push([l,anc3_np]);
+			anc4_c.push([l,anc4_np]);
+			eddanc2_c.push([l,eddanc2_np]);
+			eddanc3_c.push([l,eddanc3_np]);
+			eddanc4_c.push([l,eddanc4_np]);
+			eddanc2_doc.push([l,eddanc2_dop]);
+			eddanc3_doc.push([l,eddanc3_dop]);
+			eddanc4_doc.push([l,eddanc4_dop]);
+			ticks.push([l, loc_n]);
+			globaltot += tot_n, anc1_tot += anc1_n, anc2_tot += anc2_n, anc3_tot += anc3_n , anc4_tot += anc4_n, eddanc2_tot +=eddanc2_n, eddanc3_tot +=eddanc3_n, eddanc4_tot +=eddanc4_n;
+				//alert(month_names[months_b[s].trim().split("-")[0]]);//+"-"+months_b[s+1].split("-")[1]);
+
+	tdata1 += "<tr><td><a href={{url.path}}?"+loc_t.toLowerCase()+"="+loc_id+">"+loc_n+"</a></td>"+"<td>"+anc1_n+"</td>"+"<td>"+anc2_n+"</td>"+"<td>"+anc3_n+"</td>"+"<td>"+anc4_n+"</td>"+"<td>"+tot_n+"</td>"+"<td>"+anc1_np+"</td>"+"<td>"+anc2_np+"</td>"+"<td>"+anc3_np+"</td>"+"<td>"+anc4_np+"</td></tr>";
+
+	tdata2 += "<tr><td><a href={{url.path}}?"+loc_t.toLowerCase()+"="+loc_id+">"+loc_n+"</a></td>"+"<td>"+eddanc2_np+"</td>"+"<td>"+eddanc2_dop+"</td>"+"<td>"+eddanc3_np+"</td>"+"<td>"+eddanc3_dop+"</td>"+"<td>"+eddanc3_pnp+"</td>"+"<td>"+eddanc3_pdop+"</td>"+"<td>"+eddanc4_np+"</td>"+"<td>"+eddanc4_dop+"</td>"+"<td>"+eddanc4_pnp+"</td>"+"<td>"+eddanc4_pdop+"</td></tr>";
+
+			
+			}
+
+		if (globaltot > 0)anc1_totp = Math.round((anc1_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),anc2_totp = Math.round((anc2_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),anc3_totp = Math.round((anc3_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),anc4_totp = Math.round((anc4_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2), eddanc2_totp =  Math.round((anc2_tot * 100/eddanc2_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc3_totp = Math.round((anc3_tot * 100/eddanc3_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc4_totp = Math.round((anc4_tot * 100/eddanc4_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc3_ptotp = Math.round((anc3_tot * 100/anc2_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc4_ptotp = Math.round((anc4_tot * 100/anc3_tot)* Math.pow(10,2))/Math.pow(10,2), eddanc2_dototp = Math.round(((eddanc2_tot-anc2_tot) * 100/eddanc2_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc3_dototp = Math.round(((eddanc3_tot-anc3_tot) * 100/eddanc3_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc4_dototp = Math.round(((eddanc4_tot-anc4_tot) * 100/eddanc4_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc3_pdototp = Math.round(((anc2_tot-anc3_tot) * 100/anc2_tot)* Math.pow(10,2))/Math.pow(10,2),eddanc4_pdototp = Math.round(((anc3_tot-anc4_tot) * 100/anc3_tot)* Math.pow(10,2))/Math.pow(10,2); 
+
+		tdata1 += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+anc1_tot+"</b></td>"+"<td><b>"+anc2_tot+"</b></td>"+"<td><b>"+anc3_tot+"</b></td>"+"<td><b>"+anc4_tot+"</b></td>"+"<td><b>"+globaltot+"</b></td>"+"<td><b>"+anc1_totp+"</b></td>"+"<td><b>"+anc2_totp+"</b></td>"+"<td><b>"+anc3_totp+"</b></td>"+"<td><b>"+anc4_totp+"</b></td></tr>";
+
+
+		tdata2 += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+eddanc2_totp+"</b></td>"+"<td><b>"+eddanc2_dototp+"</b></td>"+"<td><b>"+eddanc3_totp+"</b></td>"+"<td><b>"+eddanc3_dototp+"</b></td>"+"<td><b>"+eddanc3_ptotp+"</b></td>"+"<td><b>"+eddanc3_pdototp+"</b></td>"+"<td><b>"+eddanc4_totp+"</b></td>"+"<td><b>"+eddanc4_dototp+"</b></td>"+"<td><b>"+eddanc4_ptotp+"</b></td>"+"<td><b>"+eddanc4_pdototp+"</b></td></tr>";
+
+	str1 += theader1_1+theader1+tdata1+"</table>";
+
+	str2 += theader2_1+theader2+tdata2+"</table>";
+
+
+
+	var table3 = document.createElement('table');
+
+	var theader3_1 = "<thead><!--<tr><th></th><th colspan=2>ANC2</th><th colspan=4>ANC3</th><th colspan=4>ANC4</th></tr>-->";
+	var str3 = "<table id='table-design'>";
+        var tdata3 ="<tbody>"
+	var theader3 = "<tr><th>Month</th><th> ANC1 </th><th> ANC2   </th><th> ANC3  </th><th> ANC4  </th><th>Total</th><th> ANC1(%) </th><th>  ANC2(%)  </th><th>  ANC3(%)  </th><th>  ANC4(%)  </th></tr></thead>";
+
+
+	var table4 = document.createElement('table');
+
+	var theader4_1 = "<thead><tr><th></th><th colspan=2>ANC2</th><th colspan=4>ANC3</th><th colspan=4>ANC4</th></tr>";
+	var str4 = "<table id='table-design'>";
+        var tdata4 ="<tbody>"
+	var theader4 = "<tr><th>Month</th><th> CR(%) </th><th> DOR(%) </th><th> CR(%) </th><th> DOR(%) </th><th> CR(%)/ANC2 </th><th> DOR(%)/ANC2 </th><th> CR(%) </th><th> DOR(%) </th><th> CR(%)/ANC3 </th><th> DOR(%)/ANC3 </th></tr></thead>";
+
+var anc1_c_m =[] , anc2_c_m = [], ticks_m  = [], anc3_c_m = [], anc4_c_m = [], globaltot_m=0,anc1_tot_m=0,anc2_tot_m=0,anc3_tot_m=0,anc4_tot_m=0,anc1_totp_m=0,anc2_totp_m=0,anc3_totp_m=0,anc4_totp_m=0;
+
+		for ( var s in months_b) { 
+			var anc1_n_m,anc2_n_m,anc3_n_m,anc4_n_m,tot_n_m,anc1_np_m,anc2_np_m,anc3_np_m,anc4_np_m, eddanc2_n_m,eddanc3_n_m,eddanc4_n_m,eddanc2_np_m,eddanc3_np_m,eddanc4_np_m,eddanc3_pnp_m,eddanc4_pnp_m, eddanc2_dop_m,eddanc3_dop_m,eddanc4_dop_m,eddanc3_pdop_m,eddanc4_pdop_m;
+
+			var month_n = month_names[months_b[s].trim().split("-")[0]]+"-"+months_b[s].trim().split("-")[1];
+
+			if (anc1_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) anc1_n_m = anc1_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else anc1_n_m = 0;
+			if (anc2_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) anc2_n_m = anc2_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]; 
+			else anc2_n_m = 0;
+			if (anc3_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) anc3_n_m = anc3_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else anc3_n_m = 0;
+			if (anc4_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) anc4_n_m = anc4_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else anc4_n_m = 0;
+			if (eddanc2_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) eddanc2_n_m = eddanc2_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else eddanc2_n_m = 0;
+			if (eddanc3_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) eddanc3_n_m = eddanc3_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else eddanc3_n_m = 0;
+			if (eddanc4_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) eddanc4_n_m = eddanc4_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else eddanc4_n_m = 0;
+			if (tot_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) { 	
+				if (anc1_n_m != 0){
+					tot_n_m = tot_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]] + anc1_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+					}else{
+					tot_n_m = tot_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+					}
+
+							anc1_np_m = Math.round((anc1_n_m*100/tot_n_m)* Math.pow(10,2))/Math.pow(10,2); 
+							anc2_np_m = Math.round((anc2_n_m*100/tot_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							anc3_np_m = Math.round((anc3_n_m*100/tot_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							anc4_np_m = Math.round((anc4_n_m*100/tot_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc2_np_m = Math.round((anc2_n_m*100/eddanc2_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_np_m = Math.round((anc3_n_m*100/eddanc3_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_np_m = Math.round((anc4_n_m*100/eddanc4_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_pnp_m = Math.round((anc3_n_m*100/anc2_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_pnp_m = Math.round((anc4_n_m*100/anc3_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc2_dop_m = Math.round(((eddanc2_n_m-anc2_n_m)*100/eddanc2_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_dop_m = Math.round(((eddanc3_n_m-anc3_n_m)*100/eddanc3_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_dop_m = Math.round(((eddanc4_n_m-anc4_n_m)*100/eddanc4_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc3_pdop_m = Math.round(((anc2_n_m-anc3_n_m)*100/anc2_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							eddanc4_pdop_m = Math.round(((anc3_n_m-anc4_n_m)*100/anc3_n_m)* Math.pow(10,2))/Math.pow(10,2);
+						
+				
+							}else { 
+							if (anc1_n_m != 0){
+								tot_n_m = anc1_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+							}else{
+								tot_n_m = 0;
+							}
+									anc1_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//fac_n*100/tot_n.toFixed(2); 
+									anc2_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//route_n*100/tot_n.toFixed(2);
+									anc3_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//home_n*100/tot_n.toFixed(2);
+									anc4_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//unk_n*100/tot_n.toFixed(2);
+									eddanc2_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_pnp_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_pnp_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc2_dop_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_dop_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_dop_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc3_pdop_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									eddanc4_pdop_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+								}
+			
+			anc1_c_m.push([s,anc1_np_m]);
+			anc2_c_m.push([s,anc2_np_m]);
+			anc3_c_m.push([s,anc3_np_m]);
+			anc4_c_m.push([s,anc4_np_m]);
+			ticks_m.push([s, month_n]);
+			eddanc2_c_m.push([s,eddanc2_np_m]);
+			eddanc3_c_m.push([s,eddanc3_pnp_m]);
+			eddanc4_c_m.push([s,eddanc4_pnp_m]);
+			eddanc2_doc_m.push([s,eddanc2_dop_m]);
+			eddanc3_doc_m.push([s,eddanc3_pdop_m]);
+			eddanc4_doc_m.push([s,eddanc4_pdop_m]);
+			globaltot_m += tot_n_m, anc1_tot_m += anc1_n_m, anc2_tot_m += anc2_n_m, anc3_tot_m += anc3_n_m , anc4_tot_m += anc4_n_m, eddanc2_tot_m +=eddanc2_n_m, eddanc3_tot_m +=eddanc3_n_m, eddanc4_tot_m +=eddanc4_n_m;
+				//alert(month_names[months_b[s].trim().split("-")[0]]);//+"-"+months_b[s+1].split("-")[1]);
+
+	tdata3 += "<tr><td>"+month_n+"</td>"+"<td>"+anc1_n_m+"</td>"+"<td>"+anc2_n_m+"</td>"+"<td>"+anc3_n_m+"</td>"+"<td>"+anc4_n_m+"</td>"+"<td>"+tot_n_m+"</td>"+"<td>"+anc1_np_m+"</td>"+"<td>"+anc2_np_m+"</td>"+"<td>"+anc3_np_m+"</td>"+"<td>"+anc4_np_m+"</td></tr>";
+	
+	tdata4 += "<tr><td>"+month_n+"</td>"+"<td>"+eddanc2_np_m+"</td>"+"<td>"+eddanc2_dop_m+"</td>"+"<td>"+eddanc3_np_m+"</td>"+"<td>"+eddanc3_dop_m+"</td>"+"<td>"+eddanc3_pnp_m+"</td>"+"<td>"+eddanc3_pdop_m+"</td>"+"<td>"+eddanc4_np_m+"</td>"+"<td>"+eddanc4_dop_m+"</td>"+"<td>"+eddanc4_pnp_m+"</td>"+"<td>"+eddanc4_pdop_m+"</td></tr>";
+			
+			}
+
+		if (globaltot_m > 0) anc1_totp_m = Math.round((anc1_tot_m * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),anc2_totp_m = Math.round((anc2_tot_m * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),anc3_totp_m = Math.round((anc3_tot_m * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),anc4_totp_m = Math.round((anc4_tot_m * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2), eddanc2_totp_m = Math.round((anc2_tot_m * 100/eddanc2_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc3_totp_m = Math.round((anc3_tot_m * 100/eddanc3_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc4_totp_m = Math.round((anc4_tot_m * 100/eddanc4_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc3_ptotp_m = Math.round((anc3_tot_m * 100/anc2_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc4_ptotp_m = Math.round((anc4_tot_m * 100/anc3_tot_m)* Math.pow(10,2))/Math.pow(10,2), eddanc2_dototp_m = Math.round(((eddanc2_tot_m-anc2_tot_m) * 100/eddanc2_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc3_dototp_m = Math.round(((eddanc3_tot_m-anc3_tot_m) * 100/eddanc3_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc4_dototp_m = Math.round(((eddanc4_tot_m-anc4_tot_m) * 100/eddanc4_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc3_pdototp_m = Math.round(((anc2_tot_m-anc3_tot_m) * 100/anc2_tot_m)* Math.pow(10,2))/Math.pow(10,2),eddanc4_pdototp_m = Math.round(((anc3_tot_m-anc4_tot_m) * 100/anc3_tot_m)* Math.pow(10,2))/Math.pow(10,2); 
+
+		tdata3 += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+anc1_tot_m+"</b></td>"+"<td><b>"+anc2_tot_m+"</b></td>"+"<td><b>"+anc3_tot_m+"</b></td>"+"<td><b>"+anc4_tot_m+"</b></td>"+"<td><b>"+globaltot_m+"</b></td>"+"<td><b>"+anc1_totp_m+"</b></td>"+"<td><b>"+anc2_totp_m+"</b></td>"+"<td><b>"+anc3_totp_m+"</b></td>"+"<td><b>"+anc4_totp_m+"</b></td></tr>";
+
+		tdata4 += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+eddanc2_totp_m+"</b></td>"+"<td><b>"+eddanc2_dototp_m+"</b></td>"+"<td><b>"+eddanc3_totp_m+"</b></td>"+"<td><b>"+eddanc3_dototp_m+"</b></td>"+"<td><b>"+eddanc3_ptotp_m+"</b></td>"+"<td><b>"+eddanc3_pdototp_m+"</b></td>"+"<td><b>"+eddanc4_totp_m+"</b></td>"+"<td><b>"+eddanc4_dototp_m+"</b></td>"+"<td><b>"+eddanc4_ptotp_m+"</b></td>"+"<td><b>"+eddanc4_pdototp_m+"</b></td></tr>"; 
+		
+		str3 += theader3_1+theader3+tdata3+"</table>";
+
+		str4 += theader4_1+theader4+tdata4+"</table>";
+
+		
+
+	var tableDiv1 = document.getElementById('table1');
+	tableDiv1.innerHTML = str1;
+
+	var tableDiv2 = document.getElementById('table2');
+	tableDiv2.innerHTML = str2;
+
+	var tableDiv3 = document.getElementById('table3');
+	tableDiv3.innerHTML = str3;
+
+	var tableDiv4 = document.getElementById('table4');
+	tableDiv4.innerHTML = str4;
+
+
+
+
+var plotarea_l = document.getElementById("placeholder_l");
+
+var data_l =[
+        {
+            data: anc1_c,
+            color: '#409628',
+            label:' ANC1 ',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: anc2_c,
+            color: '#C0504D',
+            label:' ANC2 ',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: anc3_c,
+            label:' ANC3 ',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: anc4_c,
+            color: '#4F81BD',
+            label:' ANC4 ',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        }
+    ];
+
+var options_l ={
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks },
+                yaxis:{ min:0,max:100,ticks:[[10,"10%"],[20,"20%"],[30,"30%"],[40,"40%"],[50,"50%"],[60,"60%"],[70,"70%"],[80,"80%"],[90,"90%"],[100,"100%"]] },
+        multiplebars: true
+    };
+
+
+
+var plotarea_m = document.getElementById("placeholder_m");
+var data_m = [
+		{
+			label: " ANC1 ",
+			data: anc1_c_m,
+			lines: { show: true },
+			points: { show: true }
+		},
+		{
+			label: " ANC2 ",
+			data: anc2_c_m,
+			lines: { show: true },
+			points: { show: true }
+		},
+		{
+			label: " ANC3 ",
+			data: anc3_c_m,
+			lines: { show: true },
+			points: { show: true }
+		},
+		{
+			label: " ANC4 ",
+			data: anc4_c_m,
+			lines: { show: true },
+			points: { show: true }
+		}
+	];
+	
+
+var options_m = {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks_m },
+                yaxis:{ min:0 },
+        multiplebars: true
+    }; 
+
+
+
+var plotarea_anc2cd = document.getElementById("placeholder_anc2cd");
+var anc2_cd = [
+	{
+            data: eddanc2_c_m,
+            color: '#409628',
+            label:' ANC2: Continum Rate ',
+            lines: { show: true },
+	    points: { show: true }
+        },
+	{
+            data: eddanc2_doc_m,
+            color: '#4F81BD',
+            label:' ANC2: Drop Out Rate ',
+            lines: { show: true },
+	    points: { show: true }
+        }
+        
+    ];
+
+
+var options_anc2cd ={
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks_m },
+                yaxis:{ min:0,max:100,ticks:[[10,"10%"],[20,"20%"],[30,"30%"],[40,"40%"],[50,"50%"],[60,"60%"],[70,"70%"],[80,"80%"],[90,"90%"],[100,"100%"]] },
+        multiplebars: true
+    };
+
+
+
+var plotarea_anc3cd = document.getElementById("placeholder_anc3cd");
+var anc3_cd= [
+        {
+            data: eddanc3_c_m,
+            color: '#C0504D',
+            label:' ANC3: Continum Rate ',
+            lines: { show: true },
+	    points: { show: true }
+        },
+	{
+            data: eddanc3_doc_m,
+            color: '#6E6D6D',
+            label:' ANC3: Drop Out Rate ',
+            lines: { show: true },
+	    points: { show: true }
+        }
+     ];
+
+
+var options_anc3cd ={
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks_m },
+                yaxis:{ min:0,max:100,ticks:[[10,"10%"],[20,"20%"],[30,"30%"],[40,"40%"],[50,"50%"],[60,"60%"],[70,"70%"],[80,"80%"],[90,"90%"],[100,"100%"]] },
+        multiplebars: true
+    };
+
+
+
+var plotarea_anc4cd = document.getElementById("placeholder_anc4cd");
+var anc4_cd= [
+
+	{
+            data: eddanc4_c_m,
+            label:' ANC4: Continum Rate ',
+            lines: { show: true },
+	    points: { show: true }
+        },
+        {
+            data: eddanc4_doc_m,
+            color: '#D108D3',
+            label:' ANC4: Drop Out Rate',
+            lines: { show: true },
+	    points: { show: true }
+        }
+      ];
+
+var options_anc4cd ={
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks_m },
+                yaxis:{ min:0,max:100,ticks:[[10,"10%"],[20,"20%"],[30,"30%"],[40,"40%"],[50,"50%"],[60,"60%"],[70,"70%"],[80,"80%"],[90,"90%"],[100,"100%"]] },
+        multiplebars: true
+    };
+
+
+
+var previousPoint = null;
+    
+    $("#placeholder_l").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label + ":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+
+
+
+   $("#placeholder_m").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label +":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+  $("#placeholder_anc2cd").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label +":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    }); 
+  $("#placeholder_anc3cd").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label +":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    }); 
+  $("#placeholder_anc4cd").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label +":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+
+
+$.plot(plotarea_l,data_l,options_l); 
+$.plot(plotarea_m,data_m,options_m);
+$.plot(plotarea_anc2cd,anc2_cd,options_anc2cd);
+$.plot(plotarea_anc3cd,anc3_cd,options_anc3cd);
+$.plot(plotarea_anc4cd,anc4_cd,options_anc4cd);
+
+plotarea_l.show();
+plotarea_m.show();
+plotarea_anc2cd.show();
+plotarea_anc3cd.show();
+plotarea_anc4cd.show();
+
+
+
+</script>
+{% endblock %}
+
+
+            
+    <div class="clear-hack"></div>
+</div>
+ 
+{% endblock %}

@@ -3,12 +3,10 @@
 {% block javascripts %}
 <script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
 <script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.pie.pack.js"></script>
-<script type="text/javascript"
-    src="/static/webapp/javascripts/jquery.datepick.min.js"></script>
+
 <script type="text/javascript"
     src="/static/webapp/javascripts/stats.js"></script>
-<link rel="stylesheet" type="text/css"
-    href="/static/webapp/stylesheets/jquery.datepick.css" />
+
 <link rel="stylesheet" type="text/css"
     href="/static/webapp/stylesheets/stats.css" />
 <!--[if IE]><script type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script>
@@ -17,7 +15,8 @@
 href="/static/webapp/javascripts/extjs/resources/css/ext-all.css" />
 <script type="text/javascript" src="/static/webapp/javascripts/extjs/adapter/ext/ext-base.js"></script>
 <script type="text/javascript" src="/static/webapp/javascripts/extjs/ext-all-debug.js"></script>
-
+<link type="text/css" rel="stylesheet" href="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.css"></link>
+<script type="text/javascript" src="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.js"></script>
 
 <script type="text/javascript"> 
 
@@ -116,10 +115,8 @@ else {
             <tbody>
                 <tr>
                     <td>
-            <input type="text" id="pickstartdate" value="{{ start_date }}"
-            name="start_date" readonly="readonly" size="10" /></td>
-        <td><input type="text" id="pickenddate" value="{{ end_date }}"
-            name="end_date" readonly="readonly" size="10" />
+            <input style="background-color: white"  type="text" id="pickstartdate" value="{{ start_date }}"  name="start_date" 					readonly="readonly"  onFocus="displayCalendar(form.start_date,'dd.mm.yyyy',this)" size = "10"/></td>
+        <td><input style="background-color: white" type="text" id="pickenddate" value="{{ end_date }}"  name="end_date" 					readonly="readonly"  onFocus="displayCalendar(form.end_date,'dd.mm.yyyy',this)" size = "10" />
                     </td>
                     <td>
             <select name="province" id="provchoose"><option></option>

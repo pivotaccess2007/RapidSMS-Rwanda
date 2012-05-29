@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Flot Examples</title>
+    <link href="layout.css" rel="stylesheet" type="text/css"></link>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script><![endif]-->
+    <script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery-1.4.1.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.multi.js"></script>
+ </head>
+    <body>
+    <h1>Flot Examples</h1>
+
+    <div id="placeholder" style="width:900px;height:300px"></div>
+
+    <p>Flot will hopefully support multiple bar charts if I can get something worthwhile committed :)</p>
+
+<script id="source" language="javascript" type="text/javascript">
+
+$(function () {
+
+    var income = [[0,310.00],[1,417.99],[2,3228.12],[3,1945.14],[4,2065.20],[5,2444.27],[6,2327.58],[7,1823.28],[8,2083.47],[9,1918.52],[10,3960.69],[11,1893.97]];
+    var expense = [[0,206.54],[1,472.45],[2,808.21],[3,1094.28],[4,1730.85],[5,2725.24],[6,1090.20],[7,2098.78],[8,2704.10],[9,1723.28],[10,2145.52],[11,3882.22]];
+    var nothing = [[0,4000],[1,4000],[2,4000],[3,4000],[4,4000],[5,4000],[6,4000],[7,4000],[8,4000],[9,4000],[10,4000],[11,4000]];
+        var balance = [[0,103.46],[1,49.00],[2,2468.91],[3,3319.77],[4,3654.12],[5,3373.15],[6,4610.53],[7,4335.03],[8,3714.40],[9,3909.64],[10,5724.81],[11,3736.56]];
+    
+    $.plot($("#placeholder"), [
+        {
+            data: income,
+            color: '#409628',
+            label:'Income',
+            bars: { show: true, align:'center', barWidth:0.3 }
+        },
+        {
+            data: expense,
+            color: '#C0504D',
+            label:'Expense',
+            bars: { show: true, align:'center', barWidth:0.3 }
+        },
+        {
+            data: nothing,
+            label:'Nothing',
+            bars: { show: true, align:'center', barWidth:0.3 }
+        },
+        {
+            data: balance,
+            label:'Balance',
+            color: '#4F81BD',
+            lines: { show: true },
+            points: { show: true }
+        }
+    ],
+    {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:[0,1,2,3,4,5,6,7,8,9,10,11] },
+                yaxis:{ min:0,max:7000 },
+        multiplebars: true
+    });
+});
+    function showTooltip(x, y, contents) {
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 1.0
+        }).appendTo("body").fadeIn(200);
+    }
+    var previousPoint = null;
+    $("#placeholder").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2);
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label + ": £" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+</script>
+
+ </body>
+</html>
+

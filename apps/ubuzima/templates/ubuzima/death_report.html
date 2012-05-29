@@ -1,0 +1,765 @@
+{% extends base_template %}
+{% block title %}Death Report{% endblock %}
+
+{% block javascripts %}
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/layout.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/modules.css" ></link>
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/tabview.css" ></link>
+<link rel="stylesheet" type="text/css"  href="/static/webapp/stylesheets/stats.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.css"></link>
+<style type="text/css" rel="stylesheet">
+.table-design thead ,.table-design th , .table-design td {
+	border:solid black 1px
+	}
+</style>
+
+<!--[if IE]><script language="javascript" type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery-1.4.1.min.js"></script>
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.table2csv.0.1.1.min.js"></script>
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/downloadify.min.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/swfobject.js"></script>
+<script language="javascript" language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.multi.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/tabview.js"></script>
+<script type="text/javascript"  src="/static/webapp/javascripts/stats.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.js"></script>
+
+
+
+<script language="javascript" type="text/javascript"> 
+
+jQuery(function() {
+  jQuery("#table_m").table2csv({
+   callback: function (csv) {
+
+	var j$ = jQuery.noConflict();
+      j$(document).ready( function () {
+        //var exportdata = j$("#table-design").html();
+ 
+        Downloadify.create('downloadify_m',{
+              filename: function(){
+                  return j$('#filename_m').val();
+              },
+              data: function(){
+                  return csv;
+              },onComplete: function(){ 
+	    	alert('The file has been saved!'); 
+	  	},
+	  	onCancel: function(){ 
+	    	alert('You have cancelled the saving of this file.');
+	  	},
+	  	onError: function(){ 
+	    	alert('Error!  Damn!'); 
+	  	},
+	  	transparent: false,
+              swf: "/static/webapp/javascripts/downloadify/media/downloadify.swf",
+              downloadImage:"/static/webapp/javascripts/downloadify/images/download.png",
+              width: 100,
+              height: 30,
+              transparent: true,
+              append: false
+          });
+      });//http://ugeshgali.blogspot.com/2012/01/export-to-excel-in-salesforce-from.html
+    //alert(csv);
+	//window.location.href = 'data:text/csv;charset=UTF-8,'+ encodeURIComponent(csv);
+   }
+  });
+
+jQuery("#table_l").table2csv({
+   callback: function (csv) {
+
+	var j$ = jQuery.noConflict();
+      j$(document).ready( function () {
+        //var exportdata = j$("#table-design").html();
+ 
+        Downloadify.create('downloadify_l',{
+              filename: function(){
+                  return j$('#filename_l').val();
+              },
+              data: function(){
+                  return csv;
+              },onComplete: function(){ 
+	    	alert('The file has been saved!'); 
+	  	},
+	  	onCancel: function(){ 
+	    	alert('You have cancelled the saving of this file.');
+	  	},
+	  	onError: function(){ 
+	    	alert('Error!  Damn!'); 
+	  	},
+	  	transparent: false,
+              swf: "/static/webapp/javascripts/downloadify/media/downloadify.swf",
+              downloadImage:"/static/webapp/javascripts/downloadify/images/download.png",
+              width: 100,
+              height: 30,
+              transparent: true,
+              append: false
+          });
+      });
+   }
+  });
+ });
+    
+function showTooltip(x, y, contents) {
+	
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#eee',
+            opacity: 1.0
+        }).appendTo("body").fadeIn(200);
+    }
+
+function deroulement(form)
+  {
+	
+	path=document.URL;	
+	
+if (form.navlocation.value == "")
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			
+			window.location=path;
+			}
+       }
+	
+else{
+			var loc = form.navlocation.value.split('.')[1];
+			if ( loc == 'Health Centre') loc = "Location";
+			
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			path=path.replace(/(loc=)[^\&]+/, '$1' + form.navlocation.value.split('.')[0].toLowerCase());
+			if(path.indexOf("?") < 0 && path.indexOf("start_date") < 0 )window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else if(path.indexOf("start_date") < 0 )window.location=path+'&start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else window.location=path;
+	}	
+
+ }
+
+function fetch_stats_indics(indic){
+	var path=document.URL;
+	
+	if (path.indexOf(indic) < 0 ) {
+		 if (window.location.pathname.split("dash")[1] !="") window.location=path.replace(window.location.pathname.split("dash")[1], '/'+indic);
+		 else window.location=path.replace(window.location.pathname, window.location.pathname+'/'+indic);
+		}
+	else window.location=path;
+}
+
+
+</script>
+
+
+
+{% endblock %}
+
+<!-- {% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+	<li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %} -->
+
+{% block content %}
+
+<div>
+    <form name="filtering" class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                
+                <tr>
+			<th>Start</th><th ><input style="background-color: white"  type="text" id="pickstartdate" value="{{ start_date }}"  name="start_date" 					readonly="readonly"  onFocus="displayCalendar(form.start_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>End</th><th><input style="background-color: white" type="text" id="pickenddate" value="{{ end_date }}"  name="end_date" 					readonly="readonly"  onFocus="displayCalendar(form.end_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>Location Navigation</th><th><select style="background-color: white" name="navlocation" id="navlocation" >
+						{% if sel %}<option value="{{ sel.id }}.{{sel.type.name}}"  								selected="selected" >{{ sel.name }}&nbsp;{{ sel.type.name}}</option> {% else %}
+							<option value="" selected="selected">{{ usrloc.location.name }}</option>{% endif %}
+						{%  for loc in locs %}
+							<option value="{{ loc.id }}.{{loc.type.name}}" {% if loc.selected  %} 								selected="selected" {% endif %}>{{ loc.name }}</option>
+						{%  endfor %}
+						
+                				
+            					</select></th>
+			<th></th><th></th></tr>
+            </thead>
+            <tbody>
+        <tr>	<td colspan="4">
+		<a href={{request.path}}>Rwanda</a>
+		{% if prv %}
+		&nbsp;&gt;<a href={{request.path}}?province={{prv.id}}>{{ prv.name }}&nbsp;{{ prv.type.name }}</a>
+		{% else %}
+			{% if dst %}&nbsp;&gt;<a href={{request.path}}?province={{dst.parent.id}} >{{ dst.parent.name }}&nbsp;{{ dst.parent.type.name }}</a> 
+			{% else %}
+			{% if lxn %}&nbsp;&gt;<a href={{request.path}}?province={{lxn.province.id}} >{{ lxn.province.name }}&nbsp;{{ lxn.province.type.name }}</a>			{% endif %}
+			{% endif %}
+		{% endif %}
+
+		{% if dst %}
+		&nbsp;&gt;<a href={{request.path}}?district={{dst.id}}>{{ dst.name }}&nbsp;{{ dst.type.name }}</a>
+		{% else %}
+		{% if lxn %}&nbsp;&gt;<a href={{request.path}}?district={{lxn.district.id}} >{{ lxn.district.name }}&nbsp;{{ lxn.district.type.name }}</a>
+		{% endif %}
+		{% endif %}
+		
+		{% if lxn %}
+		&nbsp;&gt;<a href={{request.path}}?location={{lxn.original.id}}>{{ lxn.original.name }}&nbsp;{{ lxn.original.type.name }}</a>
+		{% endif %}
+		
+            	<td> <!-- <input type="button" value="Update Filters"  onClick="return deroulement(this.form);"/> --> </td>
+	   	<td> <!-- <a href={{request.url}}?csv{%if postqn%}&{{postqn}}{%endif%}>Export Reports Log</a> --> </td>
+                </tr>
+		 <tr>
+			<td><!--Table--></td><td ><!--Graph--></td><td><!--Map--></td><td></td>
+			<td></td><td></td><td></td><td><a href="/ubuzima/dash{%if postqn%}?{{postqn}}{%endif%}">Back To Dashboard</a></td>
+		</tr>
+		</tbody>
+        </table>
+    </form>
+<div class="tmp">
+
+
+<div>
+    
+    <div class="clear-hack"></div>
+</div>
+    
+    <table width="100%">
+        
+        <tbody>
+            
+<tr>
+    <td height="21" colspan="5" >
+
+	<div class="TabView" id="TabView">
+	<!-- *** Tabs ************************************************************** -->
+
+<div class="Tabs" style="width: 100%;">
+
+ <a onclick="return fetch_stats_indics('bir');">Births</a> <a onclick="return fetch_stats_indics('pre');">Pregnancies</a><a onclick="return fetch_stats_indics('anc');">ANCs</a><a onclick="return fetch_stats_indics('pnc');">PNCs</a><a onclick="return fetch_stats_indics('ris');">Risks</a><a onclick="return fetch_stats_indics('chi');">Child Health</a><a onclick="return fetch_stats_indics('de');">Death</a><a onclick="return fetch_stats_indics('admin');">Administrative</a>
+  
+</div>
+<!-- End Tabs -->
+
+<!-- *** Pages ************************************************************* -->
+
+<div class="Pages" style="width: 100%; height: 800px;">
+
+<!-- Page Births -->
+<div class="Page"> 
+	
+	<div class="Pad">
+		
+  	</div>
+</div>
+
+<!--End Page Births -->
+
+
+<!-- Page Pregnancies -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page Pregnancies -->
+
+<!-- Page ANCs -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page ANCs -->
+<!-- Page PNCs -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page PNCs -->
+
+<!-- Page Maternal Risks -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page Maternal Risks -->
+
+<!-- Page Child Health -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page Child Health -->
+
+<!-- Page Death -->
+  <div class="Page"> 
+  <div class="Pad">
+			<div id="wrapper" style="width:100%;">
+    <ul id="nav">
+         <li><a href="#" title="table" >Table</a></li>
+        <li><a href="#" title="graph">Graph</a></li>
+        <li><a href="#" title="map">Map</a></li>
+	<li><a href="#" title="log">Log</a></li>       
+    </ul>
+    	<div id="placeholder"></div>
+	<div id="table">
+
+		<div id="content">    	
+        		<div id="table_l"  ></div></br>
+			<div id="table_m"  ></div></br>
+    		</div>
+	</div>
+	<div id="graph">
+		<div id="content">    	
+        		<h2 >Comparison of Death Report Statistics in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+		<div id="placeholder_l" style=" width: 100%;height:400px;"></div>
+		<h2 >Variation of Death Statistics in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+		<div id="placeholder_m" style=" width: 100%;height:400px;"></div>
+    		</div>
+	</div>
+	<div id="map">
+
+		
+		<h2 >{{sel.name}}-{{sel.type.name}} On Map</h2>
+		<div id="content" align="center">    	
+        		{% include 'ubuzima/map.html' %}
+    		</div>
+	</div>
+
+	<div id="log">
+
+		
+		<h2 >Death Report Log in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+		<div id="content">    	
+        		{% include 'ubuzima/report_table.html' %}
+    		</div>
+	</div>
+    
+</div>
+			
+		
+
+		
+  </div>
+  </div>
+<!--End Page Death -->
+<!-- Page ADMIN -->
+  <div class="Page"> 
+  <div class="Pad">
+			
+  </div>
+  </div>
+<!--End Page ADMIN -->
+
+
+</div>
+
+<!-- End pages -->
+	</div>
+    
+</td>
+
+</tr>
+
+        </tbody>
+        <tfoot>
+            
+
+        </tfoot>
+    </table><table width="100%"><tr><td colspan="5"><div id="divImportant" style="width:100%;"></div></td></tr></table>
+   
+    
+<div>
+    <!--
+    <div>
+        <table class="hindics" width="100%">
+            <thead>
+                <tr class="smallhead"><th colspan="3">RapidSMS Data</th></tr>
+                <tr><th>Description</th><th>Rate</th><th></th></tr>
+            </thead>
+            <tbody>
+                {# for hind in hindics.object_list #}
+                <tr><td><a
+                        href="indicator/{#hind.id#}/html?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">{#hind.proper_name#}</a></td><td>{#hind.instances_count#}</td><td>[<a
+                        href="indicator/{#hind.id#}/csv?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">export</a>]</td></tr>
+                {# endfor #}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">{# paginator hindics #}</td>
+                </tr>
+                <tr>
+                    <td colspan="3">Matching Reports: {# hindics.paginator.count #}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    -->
+	<div class="clear-hack"></div>
+</div>
+
+
+</div>
+
+{% block tabview %}
+
+<script type="text/javascript">
+
+tabview_switch('TabView',7);
+
+var locs = "{% for l in locs %} {% if not forloop.first %},{% endif %}{{l.name}}-{{l.id}}-{{l.type}} {% endfor %}".split(",") ;
+var annot="{{annot_l}}";
+var month_names = ["Month", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+var months_b = "{% for m in track.months %} {% if not forloop.first %},{% endif %}{{m}} {% endfor %}".split(",") ;
+
+
+
+if (annot.split(",")[0] == "location__parent__parent__parent__name"){
+var matde_l = jQuery.parseJSON('{ {% for tr in track.items_l.matde %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__parent__name}}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), chide_l = jQuery.parseJSON('{ {% for tr in track.items_l.chide %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),nebde_l = jQuery.parseJSON('{ {% for tr in track.items_l.nebde %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), bir_l = jQuery.parseJSON('{ {% for tr in track.bir_l %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), tot_l = jQuery.parseJSON('{ {% for tr in track.items_l.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+//alert(matde_l["NORTHERN-15725"]+","+chide_l["NORTHERN-15725"]+","+nebde_l["NORTHERN-15725"]+","+tot_l["NORTHERN-15725"]);
+}else if(annot.split(",")[0] == "location__parent__parent__name"){
+	var matde_l = jQuery.parseJSON('{ {% for tr in track.items_l.matde %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__name}}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), chide_l = jQuery.parseJSON('{ {% for tr in track.items_l.chide %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),nebde_l = jQuery.parseJSON('{ {% for tr in track.items_l.nebde %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), bir_l = jQuery.parseJSON('{ {% for tr in track.bir_l %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), tot_l = jQuery.parseJSON('{ {% for tr in track.items_l.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+//alert(matde_l["Musanze-15749"]+","+chide_l["Musanze-15749"]+","+nebde_l["Musanze-15749"]+","+tot_l["Musanze-15749"]);
+	}else if(annot.split(",")[0] == "location__name"){
+	var matde_l = jQuery.parseJSON('{ {% for tr in track.items_l.matde %} {% if not forloop.first %},{% endif %} "{{tr.location__name}}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'), chide_l = jQuery.parseJSON('{ {% for tr in track.items_l.chide %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),nebde_l = jQuery.parseJSON('{ {% for tr in track.items_l.nebde %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'), bir_l = jQuery.parseJSON('{ {% for tr in track.bir_l %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'), tot_l = jQuery.parseJSON('{ {% for tr in track.items_l.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }');
+//alert(matde_l["Muhoza-31448"]+","+chide_l["Muhoza-31448"]+","+nebde_l["Muhoza-31448"]+","+tot_l["Muhoza-31448"]);
+	}
+
+var matde_m = jQuery.parseJSON('{ {% for tr in track.items_m.matde %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'), chide_m = jQuery.parseJSON('{ {% for tr in track.items_m.chide %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'), nebde_m = jQuery.parseJSON('{ {% for tr in track.items_m.nebde %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'), bir_m = jQuery.parseJSON('{ {% for tr in track.bir_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'), tot_m = jQuery.parseJSON('{ {% for tr in track.items_m.tot %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }');
+
+var matde_l_c =[] , chide_l_c = [],chide_l_r_c = [], ticks_l  = [], nebde_l_c =[], bir_l_tot=0, globaltot_l=0, matde_l_tot=0, chide_l_tot=0, nebde_l_tot=0, matde_l_totp=0, chide_l_totp=0, nebde_l_totp=0, chide_l_totr=0;
+
+var matde_m_c =[] , chide_m_c = [],chide_m_r_c = [], ticks_m  = [], nebde_m_c =[], bir_m_tot=0, globaltot_m=0, matde_m_tot=0, chide_m_tot=0, nebde_m_tot=0, matde_m_totp=0, chide_m_totp=0, nebde_m_totp=0, chide_m_totr=0;
+	
+	
+	var str_l = "<h2 >Death Report Statistics in {{sel.name}}-{{sel.type.name}} By "+locs[0].split("-")[2]+"</h2><table class = 'table-design' id = 'table_l'>";	
+	var theader_l = "<thead> <tr><th>"+locs[0].split("-")[2]+"</th><th>Maternal Death</th><th>Child Death</th><th>New Born Death</th><th>Total</th><th>Total Birth</th><th>Child Mortality Rate</th><th>Maternal Death(%)</th><th>Child Death(%)</th><th>New Born Death(%)</th></tr></thead>";
+	var tdata_l = "<tbody>";
+	for ( var l in locs) {
+			var matde_l_n,chide_l_n,nebde_l_n,tot_l_n,matde_l_np,chide_l_np,nebde_l_np,matde_l_r,chide_l_r,nebde_l_r;
+			
+			var loc_n = $.trim(locs[l]).split("-")[0];
+			var loc_id = $.trim(locs[l]).split("-")[1];
+			var loc_t = $.trim(locs[l]).split("-")[2];
+			if ( loc_t == 'Health Centre') loc_t = "Location";
+			if (matde_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]) matde_l_n = matde_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]];
+			else matde_l_n = 0;
+			if (chide_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]) chide_l_n = chide_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]; 
+			else chide_l_n = 0;
+			if (nebde_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]) nebde_l_n = nebde_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]];
+			else nebde_l_n = 0;
+
+			if (bir_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]) { 	bir_l_n = bir_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]; 
+							matde_l_r = Math.round((matde_l_n/(bir_l_n*1000))* Math.pow(10,3))/Math.pow(10,3); 
+							chide_l_r = Math.round((chide_l_n*1000/bir_l_n)* Math.pow(10,3))/Math.pow(10,3);
+							nebde_l_r = Math.round((nebde_l_n/(bir_l_n*1000))* Math.pow(10,3))/Math.pow(10,3);
+							
+							}else { bir_l_n = 0;
+									matde_l_r = Math.round((0)* Math.pow(10,3))/Math.pow(10,3); 
+									chide_l_r = Math.round((0)* Math.pow(10,3))/Math.pow(10,3);
+									nebde_l_r = Math.round((0)* Math.pow(10,3))/Math.pow(10,3);
+									
+								}
+			
+			if (tot_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]) { 	tot_l_n = tot_l[$.trim(locs[l]).split("-")[0]+"-"+$.trim(locs[l]).split("-")[1]]; 
+							matde_l_np = Math.round((matde_l_n*100/tot_l_n)* Math.pow(10,2))/Math.pow(10,2); 
+							chide_l_np = Math.round((chide_l_n*100/tot_l_n)* Math.pow(10,2))/Math.pow(10,2);
+							nebde_l_np = Math.round((nebde_l_n*100/tot_l_n)* Math.pow(10,2))/Math.pow(10,2);
+							
+							}else { tot_l_n = 0;
+									matde_l_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2); 
+									chide_l_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									nebde_l_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									
+								}
+			
+			matde_l_c.push([l,matde_l_np]);
+			chide_l_c.push([l,chide_l_np]);
+			nebde_l_c.push([l,nebde_l_np]);
+			chide_l_r_c.push([l,chide_l_r]);
+			
+			ticks_l.push([l, loc_n]);
+			globaltot_l += tot_l_n, matde_l_tot += matde_l_n, chide_l_tot += chide_l_n, nebde_l_tot += nebde_l_n , bir_l_tot += bir_l_n ;
+				
+	tdata_l += "<tr><td><a href={{url.path}}?"+loc_t.toLowerCase()+"="+loc_id+">"+loc_n+"</a></td>"+"<td>"+matde_l_n+"</td>"+"<td>"+chide_l_n+"</td>"+"<td>"+nebde_l_n+"</td>"+"<td>"+tot_l_n+"</td><td>"+bir_l_n+"</td>"+"<td>"+chide_l_r+"</td>"+"</td>"+"<td>"+matde_l_np+"</td>"+"<td>"+chide_l_np+"</td>"+"<td>"+nebde_l_np+"</td></tr>";
+	
+	
+			
+			}
+		if (globaltot_l > 0)matde_l_totp = Math.round((matde_l_tot * 100/globaltot_l)* Math.pow(10,2))/Math.pow(10,2),chide_l_totp = Math.round((chide_l_tot * 100/globaltot_l)* Math.pow(10,2))/Math.pow(10,2),nebde_l_totp = Math.round((nebde_l_tot * 100/globaltot_l)* Math.pow(10,2))/Math.pow(10,2),chide_l_totr = Math.round((chide_l_tot*1000/bir_l_tot)* Math.pow(10,3))/Math.pow(10,3); 
+
+		tdata_l += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+matde_l_tot+"</b></td>"+"<td><b>"+chide_l_tot+"</b></td>"+"<td><b>"+nebde_l_tot+"</b></td>"+"<td><b>"+globaltot_l+"</b></td>"+"<td><b>"+bir_l_tot+"</b></td>"+"<td><b>"+chide_l_totr+"</b></td><td><b>"+matde_l_totp+"</b></td>"+"<td><b>"+chide_l_totp+"</b></td>"+"<td><b>"+nebde_l_totp+"</b></td></tr></tbody>";
+		
+		str_l += theader_l + tdata_l +"</table><div ><form> <p style ='display:none'><label for='filename_l' >Filename</label><br></br> <input type='text' name='filename_l' value='exportfile_l.xls' id='filename_l' > </p> <p id='downloadify_l' style='margin-bottom:5px;'> You must have Flash 10 installed to download this file. </p> </form></div>";
+
+	
+	
+	var str_m = "<h2 >Monthly Death Report Statistics in {{sel.name}}-{{sel.type.name}}</h2><table class = 'table-design' id = 'table_m'>";
+	var theader_m = "<thead> <tr><th>Month</th><th>Maternal Death</th><th>Child Death</th><th>New Born Death</th><th>Total</th><th>Total Birth</th><th>Child Mortality Rate</th><th>Maternal Death(%)</th><th>Child Death(%)</th><th>New Born Death(%)</th></tr></thead>";
+	var tdata_m = "";	
+	for ( var m in months_b) {
+			var matde_m_n,chide_m_n,nebde_m_n,tot_m_n,matde_m_np,chide_m_np,nebde_m_np,matde_m_r,chide_m_r,nebde_m_r;
+			
+			var month_n = month_names[months_b[m].trim().split("-")[0]]+"-"+months_b[m].trim().split("-")[1];
+
+			if (matde_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]) matde_m_n = matde_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]];
+			else matde_m_n = 0;
+			if (chide_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]) chide_m_n = chide_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]; 
+			else chide_m_n = 0;
+			if (nebde_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]) nebde_m_n = nebde_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]];
+			else nebde_m_n = 0;
+
+			if (bir_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]) { 	bir_m_n = bir_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]; 
+							matde_m_r = Math.round((matde_m_n/(bir_m_n*1000))* Math.pow(10,3))/Math.pow(10,3); 
+							chide_m_r = Math.round((chide_m_n*1000/bir_m_n)* Math.pow(10,3))/Math.pow(10,3);
+							nebde_m_r = Math.round((nebde_m_n/(bir_m_n*1000))* Math.pow(10,3))/Math.pow(10,3);
+							
+							}else { bir_m_n = 0;
+									matde_m_r = Math.round((0)* Math.pow(10,3))/Math.pow(10,3); 
+									chide_m_r = Math.round((0)* Math.pow(10,3))/Math.pow(10,3);
+									nebde_m_r = Math.round((0)* Math.pow(10,3))/Math.pow(10,3);
+									
+								}
+			
+			if (tot_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]) { 	tot_m_n = tot_m[$.trim(months_b[m]).split("-")[0]+"-"+$.trim(months_b[m]).split("-")[1]]; 
+							matde_m_np = Math.round((matde_m_n*100/tot_m_n)* Math.pow(10,2))/Math.pow(10,2); 
+							chide_m_np = Math.round((chide_m_n*100/tot_m_n)* Math.pow(10,2))/Math.pow(10,2);
+							nebde_m_np = Math.round((nebde_m_n*100/tot_m_n)* Math.pow(10,2))/Math.pow(10,2);
+							
+							}else { tot_m_n = 0;
+									matde_m_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2); 
+									chide_m_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									nebde_m_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);
+									
+								}
+			
+			matde_m_c.push([m,matde_m_np]);
+			chide_m_c.push([m,chide_m_np]);
+			nebde_m_c.push([m,nebde_m_np]);
+			chide_m_r_c.push([m,chide_m_r]);
+			
+			ticks_m.push([m, month_n]);
+			globaltot_m += tot_m_n, matde_m_tot += matde_m_n, chide_m_tot += chide_m_n, nebde_m_tot += nebde_m_n , bir_m_tot += bir_m_n ;
+				
+	tdata_m += "<tr><td><b>"+month_n+"</b></td>"+"<td>"+matde_m_n+"</td>"+"<td>"+chide_m_n+"</td>"+"<td>"+nebde_m_n+"</td>"+"<td>"+tot_m_n+"</td><td>"+bir_m_n+"</td>"+"<td>"+chide_m_r+"</td>"+"</td>"+"<td>"+matde_m_np+"</td>"+"<td>"+chide_m_np+"</td>"+"<td>"+nebde_m_np+"</td></tr>";
+	
+	
+			
+			}
+		if (globaltot_m > 0)matde_m_totp = Math.round((matde_m_tot * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),chide_m_totp = Math.round((chide_m_tot * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),nebde_m_totp = Math.round((nebde_m_tot * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),chide_m_totr = Math.round((chide_m_tot*1000/bir_m_tot)* Math.pow(10,3))/Math.pow(10,3); 
+
+		tdata_m += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+matde_m_tot+"</b></td>"+"<td><b>"+chide_m_tot+"</b></td>"+"<td><b>"+nebde_m_tot+"</b></td>"+"<td><b>"+globaltot_m+"</b></td>"+"<td><b>"+bir_m_tot+"</b></td>"+"<td><b>"+chide_m_totr+"</b></td><td><b>"+matde_m_totp+"</b></td>"+"<td><b>"+chide_m_totp+"</b></td>"+"<td><b>"+nebde_m_totp+"</b></td></tr>";
+		
+		str_m += theader_m + tdata_m +"</table><div><form> <p style ='display:none'><label for='filename_m' >Filename</label><br></br> <input type='text' name='filename_m' value='exportfile_m.xls' id='filename_m' > </p> <p id='downloadify_m' style='margin-bottom:5px;'> You must have Flash 10 installed to download this file. </p> </form></div>";
+		
+	var table_l = document.getElementById('table_l');
+	table_l.innerHTML = str_l;
+	var table_m = document.getElementById('table_m');
+	table_m.innerHTML = str_m;
+
+    var plotarea_l = document.getElementById("placeholder_l");
+
+    var data_l =  [
+        {
+            data: matde_l_c,
+            color: '#409628',
+            label:'Maternal Death',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: chide_l_c,
+            color: '#C0504D',
+            label:'Child Death',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: nebde_l_c,
+            label:'New Born Death',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: chide_l_r_c,
+            label:'Child Mortality Rate',
+            color: '#4F81BD',
+            lines: { show: true },
+            points: { show: true }
+        }
+    ]; 
+
+   var options_l = {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks_l },
+                yaxis:{ min:0 },
+        multiplebars: true
+    };
+
+  
+
+
+var plotarea_m = document.getElementById("placeholder_m");
+
+var data_m = [
+        
+        {
+            data: chide_m_r_c,
+            label:'Child Mortality Rate',
+            color: '#4F81BD',
+            lines: { show: true },
+            points: { show: true }
+        },{
+            data: matde_m_c,
+            color: '#409628',
+            label:'Maternal Death',
+            lines: { show: true },
+            points: { show: true }
+        },
+        {
+            data: chide_m_c,
+            color: '#C0504D',
+            label:'Child Death',
+            lines: { show: true },
+            points: { show: true }
+        },
+        {
+            data: nebde_m_c,
+            label:'New Born Death',
+            lines: { show: true },
+            points: { show: true }
+        }
+    ];
+
+var options_m = {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks_m },
+                yaxis:{ min:0 },
+        multiplebars: true
+    };
+
+var previousPoint = null;
+    
+    $("#placeholder_l").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label + ":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+$("#placeholder_m").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label +":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+
+$.plot(plotarea_l,data_l,options_l);  
+$.plot(plotarea_m,data_m,options_m); 
+var plogpage = gup("rep-page", document.referrer), logpage = parseInt('{{reports.number}}'), logDiv=document.getElementById('log');
+	
+	if( plogpage && plogpage != logpage || logpage == 2 ){ 
+				$(function(){
+				var myDiv="#log";
+				var toLoad = "#"+' #placeholder';
+				
+				$('#placeholder').hide('fast',loadContent());
+				
+				$('#nav').append('<span id="load">LOADING...</span>');
+				$('#load').fadeOut('normal');
+		
+		
+				function loadContent() {
+					
+					$('#placeholder').load(toLoad,'',showNewContent());
+			
+				}
+				function showNewContent() {
+					$(myDiv).show('normal',hideLoader());
+			
+				}
+				function hideLoader() {
+			
+					$('#load').fadeIn('normal');
+				}
+				});
+				
+		}else{ 
+				$(function(){
+				var myDiv="#table";
+				var toLoad = "#"+' #placeholder';
+				
+				$('#placeholder').hide('fast',loadContent());
+				
+				$('#nav').append('<span id="load">LOADING...</span>');
+				$('#load').fadeOut('normal');
+		
+		
+				function loadContent() {
+					
+					$('#placeholder').load(toLoad,'',showNewContent());
+			
+				}
+				function showNewContent() {
+					$(myDiv).show('normal',hideLoader());
+			
+				}
+				function hideLoader() {
+			
+					$('#load').fadeIn('normal');
+				}
+				});
+				
+		}	
+plotarea_l.show();   
+plotarea_m.show();
+
+
+</script>
+{% endblock %}
+
+
+            
+    <div class="clear-hack"></div>
+</div>
+ 
+{% endblock %}

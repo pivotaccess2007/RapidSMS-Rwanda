@@ -1,0 +1,487 @@
+{% extends base_template %}
+{% block title %}Report Log{% endblock %}
+
+{% block javascripts %}
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery-1.4.1.min.js"></script>
+<!--[if IE]><script type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script>
+<![endif]-->
+<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.multi.js"></script>
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/layout.css" />
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/modules.css" />
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/tabview.css" ></link>
+<script type="text/javascript" src="/static/webapp/javascripts/tabview.js"></script>
+<script type="text/javascript"
+    src="/static/webapp/javascripts/stats.js"></script>
+
+<link rel="stylesheet" type="text/css"
+    href="/static/webapp/stylesheets/stats.css" />
+<link type="text/css" rel="stylesheet" href="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.css"></link>
+<script type="text/javascript" src="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.js"></script>
+
+<style type="text/css">
+#table-design thead ,#table-design th , #table-design td {
+	border:solid black 1px
+	}
+</style>
+
+<script type="text/javascript"> 
+
+$(document).ready(function() {
+var locs = "{% for l in locs %} {% if not forloop.first %},{% endif %}{{l.name}}-{{l.id}}-{{l.type}} {% endfor %}".split(",") ;
+var annot="{{annot_l}}";
+
+if (annot.split(",")[0] == "location__parent__parent__parent__name"){
+var fac = jQuery.parseJSON('{ {% for tr in track.items.fac %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__parent__name}}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), route = jQuery.parseJSON('{ {% for tr in track.items.route %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),home = jQuery.parseJSON('{ {% for tr in track.items.home %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),unk = jQuery.parseJSON('{ {% for tr in track.items.unk %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+
+}else if(annot.split(",")[0] == "location__parent__parent__name"){
+	var fac = jQuery.parseJSON('{ {% for tr in track.items.fac %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__name}}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), route = jQuery.parseJSON('{ {% for tr in track.items.route %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),home = jQuery.parseJSON('{ {% for tr in track.items.home %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),unk = jQuery.parseJSON('{ {% for tr in track.items.unk %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+	}else if(annot.split(",")[0] == "location__name"){
+	var fac = jQuery.parseJSON('{ {% for tr in track.items.fac %} {% if not forloop.first %},{% endif %} "{{tr.location__name}}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'), route = jQuery.parseJSON('{ {% for tr in track.items.route %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),home = jQuery.parseJSON('{ {% for tr in track.items.home %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),unk = jQuery.parseJSON('{ {% for tr in track.items.unk %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }');
+	}
+
+var fac_c =[] , route_c = [], ticks  = [], home_c = [], unk_c = [], globaltot=0,home_tot=0,fac_tot=0,route_tot=0,unk_tot=0,home_totp=0,fac_totp=0,route_totp=0,unk_totp=0;
+	var table = document.createElement('table');
+	
+	var theader = "<thead><!--<tr><th></th><th colspan=5>Delivery Report Numbers</th><th colspan=4>Delivery Report Percentages</th></tr> -->";
+	var tdata = "";
+	var str = "<table id='table-design'>";
+	var theader1 = "<tr><th>"+locs[0].split("-")[2]+"</th><th>At Facility</th><th>On Route</th><th>At Home</th><th>Unknown Location</th><th>Total</th><th>At Facility(%)</th><th>On Route(%)</th><th>At Home(%)</th><th>Unknown Location(%)</th></tr></thead>";
+	
+	//var index=months_b[0]; //Month at index one
+	//alert(fac+"==="+index.trim());// Data and month at the index one
+	//alert(index.trim());
+	for ( var l in locs) {
+			var fac_n,route_n,home_n,unk_n,tot_n,fac_np,route_np,home_np,unk_np;
+			
+			var loc_n = locs[l].trim().split("-")[0];
+			var loc_id = locs[l].trim().split("-")[1];
+			var loc_t = locs[l].trim().split("-")[2];
+			if ( loc_t == 'Health Centre') loc_t = "Location";
+			if (fac[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) fac_n = fac[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else fac_n = 0;
+			if (route[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) route_n = route[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]; 
+			else route_n = 0;
+			if (home[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) home_n = home[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else home_n = 0;
+			if (unk[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) unk_n = unk[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else unk_n = 0;
+			if (tot[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) { 	tot_n = tot[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]; 
+							fac_np = Math.round((fac_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2); 
+							route_np = Math.round((route_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							home_np = Math.round((home_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							unk_np = Math.round((unk_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							}else { tot_n = 0;
+									fac_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//fac_n*100/tot_n.toFixed(2); 
+									route_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//route_n*100/tot_n.toFixed(2);
+									home_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//home_n*100/tot_n.toFixed(2);
+									unk_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//unk_n*100/tot_n.toFixed(2);
+								}
+			
+			fac_c.push([l,fac_np]);
+			route_c.push([l,route_np]);
+			home_c.push([l,home_np]);
+			unk_c.push([l,unk_np]);
+			ticks.push([l, loc_n]);
+			globaltot += tot_n, fac_tot += fac_n, route_tot += route_n, home_tot += home_n , unk_tot += unk_n;
+				//alert(month_names[months_b[s].trim().split("-")[0]]);//+"-"+months_b[s+1].split("-")[1]);
+
+	tdata += "<tr><td><a href={{url.path}}?"+loc_t.toLowerCase()+"="+loc_id+">"+loc_n+"</a></td>"+"<td>"+fac_n+"</td>"+"<td>"+route_n+"</td>"+"<td>"+home_n+"</td>"+"<td>"+unk_n+"</td>"+"<td>"+tot_n+"</td>"+"<td>"+fac_np+"</td>"+"<td>"+route_np+"</td>"+"<td>"+home_np+"</td>"+"<td>"+unk_np+"</td></tr>";
+	
+	
+			
+			}
+		if (globaltot > 0)home_totp = Math.round((home_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),fac_totp = Math.round((fac_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),route_totp = Math.round((route_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),unk_totp = Math.round((unk_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2); 
+
+		tdata += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+fac_tot+"</b></td>"+"<td><b>"+route_tot+"</b></td>"+"<td><b>"+home_tot+"</b></td>"+"<td><b>"+unk_tot+"</b></td>"+"<td><b>"+globaltot+"</b></td>"+"<td><b>"+fac_totp+"</b></td>"+"<td><b>"+route_totp+"</b></td>"+"<td><b>"+home_totp+"</b></td>"+"<td><b>"+unk_totp+"</b></td></tr>";
+		
+		str += theader+theader1+tdata+"</table>";
+		
+	var tableDiv = document.getElementById('table');
+	tableDiv.innerHTML = str;
+    
+    $.plot($("#placeholder"), [
+        {
+            data: fac_c,
+            color: '#409628',
+            label:'At Facility',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: route_c,
+            color: '#C0504D',
+            label:'On Route',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: home_c,
+            label:'At Home',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: unk_c,
+            color: '#4F81BD',
+            label:'Unknwon',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        }
+    ],
+    {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks },
+                yaxis:{ min:0,max:100,ticks:[[10,"10%"],[20,"20%"],[30,"30%"],[40,"40%"],[50,"50%"],[60,"60%"],[70,"70%"],[80,"80%"],[90,"90%"],[100,"100%"]] },
+        multiplebars: true
+    });
+}); 
+    
+function showTooltip(x, y, contents) {
+	
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#eee',
+            opacity: 1.0
+        }).appendTo("body").fadeIn(200);
+    }
+
+function deroulement(form)
+  {
+	
+	path=document.URL;	
+	
+if (form.navlocation.value == "")
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			
+			window.location=path;
+			}
+       }
+	
+else{
+			var loc = form.navlocation.value.split('.')[1];
+			if ( loc == 'Health Centre') loc = "Location";
+			
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			path=path.replace(/(loc=)[^\&]+/, '$1' + form.navlocation.value.split('.')[0].toLowerCase());
+			if(path.indexOf("?") < 0 && path.indexOf("start_date") < 0 )window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else if(path.indexOf("start_date") < 0 )window.location=path+'&start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else window.location=path;
+	}	
+
+ }
+
+function fetch_stats_indics(indic){
+	var path=document.URL;
+	
+	if (path.indexOf(indic) < 0 ) {
+		 if (window.location.pathname.split("dash")[1] !="") window.location=path.replace(window.location.pathname.split("dash")[1], '/'+indic);
+		 else window.location=path.replace(window.location.pathname, window.location.pathname+'/'+indic);
+		}
+	else window.location=path;
+}
+
+
+</script>
+
+
+
+{% endblock %}
+
+<!-- {% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+	<li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %} -->
+
+{% block content %}
+
+<div>
+    <form name="filtering" class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                
+                <tr>
+			<th>Start</th><th ><input style="background-color: white"  type="text" id="pickstartdate" value="{{ start_date }}"  name="start_date" 					readonly="readonly"  onFocus="displayCalendar(form.start_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>End</th><th><input style="background-color: white" type="text" id="pickenddate" value="{{ end_date }}"  name="end_date" 					readonly="readonly"  onFocus="displayCalendar(form.end_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>Location Navigation</th><th><select style="background-color: white" name="navlocation" id="navlocation" >
+						{% if sel %}<option value="{{ sel.id }}.{{sel.type.name}}"  								selected="selected" >{{ sel.name }}&nbsp;{{ sel.type.name}}</option> {% else %}
+							<option value="" selected="selected">{{ usrloc.location.name }}</option>{% endif %}
+						{%  for loc in locs %}
+							<option value="{{ loc.id }}.{{loc.type.name}}" {% if loc.selected  %} 								selected="selected" {% endif %}>{{ loc.name }}</option>
+						{%  endfor %}
+						
+                				
+            					</select></th>
+			<th></th><th></th></tr>
+            </thead>
+            <tbody>
+        <tr>	<td colspan="4">
+		<a href={{request.path}}>Rwanda</a>
+		{% if prv %}
+		&nbsp;&gt;<a href={{request.path}}?province={{prv.id}}>{{ prv.name }}&nbsp;{{ prv.type.name }}</a>
+		{% else %}
+			{% if dst %}&nbsp;&gt;<a href={{request.path}}?province={{dst.parent.id}} >{{ dst.parent.name }}&nbsp;{{ dst.parent.type.name }}</a> 
+			{% else %}
+			{% if lxn %}&nbsp;&gt;<a href={{request.path}}?province={{lxn.province.id}} >{{ lxn.province.name }}&nbsp;{{ lxn.province.type.name }}</a>			{% endif %}
+			{% endif %}
+		{% endif %}
+
+		{% if dst %}
+		&nbsp;&gt;<a href={{request.path}}?district={{dst.id}}>{{ dst.name }}&nbsp;{{ dst.type.name }}</a>
+		{% else %}
+		{% if lxn %}&nbsp;&gt;<a href={{request.path}}?district={{lxn.district.id}} >{{ lxn.district.name }}&nbsp;{{ lxn.district.type.name }}</a>
+		{% endif %}
+		{% endif %}
+		
+		{% if lxn %}
+		&nbsp;&gt;<a href={{request.path}}?location={{lxn.original.id}}>{{ lxn.original.name }}&nbsp;{{ lxn.original.type.name }}</a>
+		{% endif %}
+		
+            	<td> <!-- <input type="button" value="Update Filters"  onClick="return deroulement(this.form);"/> --> </td>
+	   	<td> <!-- <a href={{request.url}}?csv{%if postqn%}&{{postqn}}{%endif%}>Export Reports Log</a> --> </td>
+                </tr>
+		 <tr>
+			<td><!--Table--></td><td ><!--Graph--></td><td><!--Map--></td><td></td>
+			<td></td><td></td><td></td><td></td>
+		</tr>
+		</tbody>
+        </table>
+    </form>
+<div class="tmp">
+
+
+<div>
+    
+    <div class="clear-hack"></div>
+</div>
+    
+    <table width="100%">
+        
+        <tbody>
+            
+<tr>
+    <td height="21" colspan="5" >
+
+	<div class="TabView" id="TabView">
+	<!-- *** Tabs ************************************************************** -->
+
+<div class="Tabs" style="width: 100%;">
+
+ <a onclick="return fetch_stats_indics('bir');">Births</a> <a onclick="return fetch_stats_indics('pre');">Pregnancies</a><a>ANCs</a><a>Maternal Risks</a><a>Child Health</a><a onclick="return fetch_stats_indics('de');">Death</a>
+  
+</div>
+<!-- End Tabs -->
+
+<!-- *** Pages ************************************************************* -->
+
+<div class="Pages" style="width: 100%; height: 400px;">
+
+<!-- Page Births -->
+<div class="Page"> 
+	
+	<div class="Pad">
+		<div id="table"  ></div></br>
+		<div id="placeholder" style=" width: 100%;height:400px;"></div>
+  	</div>
+</div>
+
+<!--End Page Births -->
+
+
+<!-- Page Pregnancies -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="100%">
+  <tr>
+ <td><table width="100%">
+<tr><td colspan="2">&nbsp;&nbsp;</td></tr>
+<tr><td><b>Total Pregnancies:</b>&nbsp;<b>{{track.pregnancy.total}}</b></td><td><b>Expected Deliveries:</b>&nbsp;<b>{{track.pregnancy.expected_del_total}}</b></td></tr>
+<tr>
+<td width="50%"><div style="height: 200px;"><table width="100%">
+        <thead>
+            <tr style="background-color:#2fa5d1;height:20px;color:white;FONT-SIZE: 12px;font-family: verdana;font-weight:bold;">
+                <th ><b>Indicator</b></th><th><b>Value</b></th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+           
+	<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+	<tr><td>Delivered at Health Facility</td> <td>{{track.births.hosp_del_total}}</td> </tr>
+
+	<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+	<tr><td>Delivered en Route</td> <td>{{track.births.en_route_del_total}}</td> </tr>
+	 <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr>
+                <td><!--<a href="important/html/{{stat.id}}{%if postqn%}?{{postqn}}{%endif%}"></a>-->Delivered at Home</td>
+                <td>{{track.births.home_del_total}}</td>
+               <!-- <td>[<a href="important/csv/{{stat.id}}{%if postqn%}?{{postqn}}{%endif%}">export</a>]</td>-->
+            </tr>
+
+	<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+	<tr><td>Delivered at Unknown</td> <td>{{track.births.unknown_del_total}}</td> </tr>
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table></div></td>
+
+<td width="50%"><div id="divPieChart" style="padding:10px; "></div></td>
+</tr>
+
+ </table></td>
+</tr>  
+</table>
+  </div>
+  </div>
+<!--End Page Pregnancies -->
+
+<!-- Page ANCs -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="675">
+  <tr>
+<td> ANCs</td>
+
+</tr>
+</table>
+  </div>
+  </div>
+<!--End Page ANCs -->
+
+<!-- Page Maternal Risks -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="675">
+  <tr>
+<td> Maternal Risks</td>
+
+</tr>
+</table>
+  </div>
+  </div>
+<!--End Page Maternal Risks -->
+
+<!-- Page Child Health -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="675">
+  <tr>
+<td> Child Health</td>
+</tr>
+</table>
+  </div>
+  </div>
+<!--End Page Child Health -->
+
+<!-- Page Death -->
+  <div class="Page"> 
+  <div class="Pad">
+<table width="675">
+  <tr>
+<td>Death</td>
+</tr>
+</table>
+  </div>
+  </div>
+<!--End Page Death -->
+
+
+
+</div>
+
+<!-- End pages -->
+	</div>
+    
+</td>
+
+</tr>
+
+        </tbody>
+        <tfoot>
+            
+
+        </tfoot>
+    </table><table width="100%"><tr><td colspan="5"><div id="divImportant" style="width:100%;"></div></td></tr></table>
+   
+    
+<div>
+    <!--
+    <div>
+        <table class="hindics" width="100%">
+            <thead>
+                <tr class="smallhead"><th colspan="3">RapidSMS Data</th></tr>
+                <tr><th>Description</th><th>Rate</th><th></th></tr>
+            </thead>
+            <tbody>
+                {# for hind in hindics.object_list #}
+                <tr><td><a
+                        href="indicator/{#hind.id#}/html?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">{#hind.proper_name#}</a></td><td>{#hind.instances_count#}</td><td>[<a
+                        href="indicator/{#hind.id#}/csv?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">export</a>]</td></tr>
+                {# endfor #}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">{# paginator hindics #}</td>
+                </tr>
+                <tr>
+                    <td colspan="3">Matching Reports: {# hindics.paginator.count #}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    -->
+	<div class="clear-hack"></div>
+</div>
+
+
+</div>
+
+{% block tabview %}
+<script type="text/javascript">
+
+tabview_initialize('TabView');
+var previousPoint = null;
+    
+    $("#placeholder").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2);
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label + ":" + y +"%");
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+</script>
+{% endblock %}
+
+
+            
+    <div class="clear-hack"></div>
+</div>
+ 
+{% endblock %}

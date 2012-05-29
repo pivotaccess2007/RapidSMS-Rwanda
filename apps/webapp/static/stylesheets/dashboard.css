@@ -1,0 +1,54 @@
+@charset "utf-8";
+/* CSS Document */
+
+#wrapper {
+	
+	background: #fff  no-repeat;
+	
+	border: 12px solid #fff;
+	
+}
+
+#nav {
+	list-style: none;
+	padding: 0;
+	
+	background: #00A4A4 repeat-x;
+	border-bottom:4px solid #006868;
+	display: block;
+	overflow: hidden;
+	font-size: 0.9em;
+	height:33px;
+	text-transform:capitalize;
+	
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+	
+	-webkit-transition: background-color 0.3s linear;
+	-moz-transition: background-color 0.3s linear;
+	-o-transition: background-color 0.3s linear;
+}
+#nav li {
+	display: inline;
+}
+#nav li a {
+	display: block;
+	float: left;
+	padding: 10px 20px;
+	color: white;
+	text-decoration: none;
+}
+#nav li a:hover {
+	background: #006868 repeat-x;
+}
+#load {
+	display: none;
+	float: right;
+	margin: 10px;
+	background: url(images/ajax-loader.gif);
+	width: 83px;
+	height: 13px;
+	text-indent: -9999em;
+}
+

@@ -1,0 +1,75 @@
+
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true" type="text/javascript"></script>
+
+<script type="text/javascript">
+    
+    function initialize() {
+      if (GBrowserIsCompatible()) {
+
+        function createMarker(point,html) {
+           var marker = new GMarker(point);
+           GEvent.addListener(marker, "click", function() {
+              marker.openInfoWindowHtml(html);
+           });
+           return marker;
+        }
+
+           // Display the map, with some controls and set the initial location 
+           var map = new GMap2(document.getElementById("map"));
+           map.addControl(new GSmallMapControl());
+           map.setCenter(new GLatLng(-1.9,29.9),8);
+    
+
+        {% for event in coords %}
+
+            var point = new GLatLng("{{ event.latitude }}","{{ event.longitude }}");
+            var marker = createMarker(point,' <div><strong><font size="4" face="verdana">Location name: {{ event.name }}<\/strong> <\/br><\/br><strong>Location code: {{ event.code }} <\/font><\/strong> <\/div> ')
+            map.addOverlay(marker);
+		    
+		
+        {% endfor %}
+
+           
+        mapTypeId: google.maps.MapTypeId.ROADMAP;
+      }
+    }
+
+    </script>
+
+
+
+
+<td class="maptd">
+                    <img alt="{{locationname|default:"Rwanda"}} map" src="http://maps.google.com/maps/api/staticmap?center=Rwanda&zoom=8&size=375x350&maptype=roadmap&markers=color:red|{% for coord in coords %}{% if not forloop.first %}|{% endif %}{{coord.latitude}},{{coord.longitude}}{% endfor %}&sensor=false" />
+                </td> 
+    
+
+
+===============================================View==========================
+
+
+@permission_required('ubuzima.can_view')
+def view_stats(req, **flts):
+    filters = {'period':default_period(req),
+             'location':default_location(req),
+             'province':default_province(req),
+             'district':default_district(req)}
+    track   = get_stats_track(req, filters)
+    hindics = health_indicators(req, filters)
+    stt = filters['period']['start']
+    fin = filters['period']['end']
+    lox, lxn, crd = 0, location_name(req), map_pointers(req,
+            filters['location'], filters)
+    if req.REQUEST.has_key('location') and req.REQUEST['location'] != '0':
+        lox = int(req.REQUEST['location'])
+        lxn = Location.objects.get(id = lox)
+    return render_to_response(req, 'ubuzima/stats_test.html',
+           {'track':track, 'filters':filters,'usrloc':UserLocation.objects.get(user=req.user),
+          'hindics':paginated(req, hindics, prefix = 'hind'),
+       'start_date':date.strftime(filters['period']['start'], '%d.%m.%Y'),
+         'end_date':date.strftime(filters['period']['end'], '%d.%m.%Y'),
+           'coords':crd, 'location': lox, 'locationname':lxn,
+           'chosen':the_chosen(req.REQUEST),
+        'important':get_important_stats(req, filters),
+          'targets':HealthTarget.objects.all(),
+           'postqn':(req.get_full_path().split('?', 2) + [''])[1]})

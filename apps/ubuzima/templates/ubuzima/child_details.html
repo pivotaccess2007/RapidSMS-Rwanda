@@ -1,0 +1,306 @@
+{% extends base_template %}
+{% block title %}Child Health{% endblock %}
+
+		{% block javascripts %}
+		<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/layout.css" ></link>
+		<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/modules.css" ></link>
+		<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/tabview.css" ></link>
+		<link rel="stylesheet" type="text/css"  href="/static/webapp/stylesheets/stats.css" ></link>
+		<link type="text/css" rel="stylesheet" href="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.css"></link>
+		<style type="text/css" rel="stylesheet">
+		.table-design thead ,.table-design th , .table-design td {
+			border:solid black 1px
+			}
+		</style>
+
+		<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery-1.4.1.min.js"></script>
+		<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.table2csv.0.1.1.min.js"></script>
+		<!--[if IE]><script type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script>
+		<![endif]-->
+		<script type="text/javascript" src="/static/webapp/javascripts/tabview.js"></script>
+		<script type="text/javascript"   src="/static/webapp/javascripts/stats.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/downloadify.min.js"></script>
+		<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/swfobject.js"></script>
+		<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.multi.js"></script>
+
+		<script type="text/javascript"> 
+					jQuery(function() {
+					  jQuery("#table_l").table2csv({
+					   callback: function (csv) {
+
+						var j$ = jQuery.noConflict();
+					      j$(document).ready( function () {
+						//var exportdata = j$("#table-design").html();
+					 
+						Downloadify.create('downloadify_l',{
+						      filename: function(){
+							  return j$('#filename_l').val();
+						      },
+						      data: function(){
+							  return csv;
+						      },onComplete: function(){ 
+						    	alert('The file has been saved!'); 
+						  	},
+						  	onCancel: function(){ 
+						    	alert('You have cancelled the saving of this file.');
+						  	},
+						  	onError: function(){ 
+						    	alert('Error!  Damn!'); 
+						  	},
+						  	transparent: false,
+						      swf: "/static/webapp/javascripts/downloadify/media/downloadify.swf",
+						      downloadImage:"/static/webapp/javascripts/downloadify/images/download.png",
+						      width: 100,
+						      height: 30,
+						      transparent: true,
+						      append: false
+						  });
+					      });
+					   }
+					  });
+					 });    
+					function showTooltip(x, y, contents) {
+	
+						$('<div id="tooltip">' + contents + '</div>').css( {
+						    position: 'absolute',
+						    display: 'none',
+						    top: y + 5,
+						    left: x + 5,
+						    border: '1px solid #fdd',
+						    padding: '2px',
+						    'background-color': '#eee',
+						    opacity: 1.0
+						}).appendTo("body").fadeIn(200);
+					    }
+
+					function deroulement(form)
+					  {
+	
+						path=document.URL;	
+	
+					if (form.navlocation.value == "")
+						{
+							if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+						}
+		
+							else {
+								path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+								path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			
+								window.location=path;
+								}
+					       }
+	
+					else{
+								var loc = form.navlocation.value.split('.')[1];
+								if ( loc == 'Health Centre') loc = "Location";
+			
+								path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+								path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+								path=path.replace(/(loc=)[^\&]+/, '$1' + form.navlocation.value.split('.')[0].toLowerCase());
+								if(path.indexOf("?") < 0 && path.indexOf("start_date") < 0 )window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+								else if(path.indexOf("start_date") < 0 )window.location=path+'&start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+								else window.location=path;
+						}	
+
+					 }
+
+					function fetch_stats_indics(indic){
+						var path=document.URL;
+	
+						if (path.indexOf(indic) < 0 ) {
+							 if (window.location.pathname.split("dash")[1] !="") window.location=path.replace(window.location.pathname.split("dash")[1], '/'+indic);
+							 else window.location=path.replace(window.location.pathname, window.location.pathname+'/'+indic);
+							}
+						else window.location=path;
+					}
+					
+					</script>
+		
+		{% endblock %}
+	</head>
+	<body>
+
+
+{% load pagination-tags %}
+
+{% block content %}
+
+<div id="wrapper" style="width:100%;">
+    <ul id="nav">
+        <li><a href="#" title="table" >Table</a></li>
+        <li><a href="#" title="graph">Graph</a></li>
+        <li><a href="#" title="log">Log</a></li>        
+    </ul>
+    	<div id="placeholder"></div>
+	<div id="table">
+
+		<div id="content">    	
+        		<div id="table_l"  ></div>
+			
+    		</div>
+	</div>
+	<div id="graph">
+		<div id="content">    	
+        		<h2 >WEIGHT Vs TIME  for Child {{track.id.chino}}, Sex: {{track.birth.sex}}, Mother: {{track.id.mother.national_id}}, Born on: {{track.id.dob}} in {{track.id.mother.location.name}}</h2>
+		<div id="placeholder_l" style=" width: 100%;height:400px;"></div>
+		
+    		</div>
+	</div>
+	
+	<div id="log">
+
+		
+		<h2 >Report Log for Child {{track.id.chino}}, Sex: {{track.birth.sex}}, Mother: {{track.id.mother.national_id}}, Born on: {{track.id.dob}} in {{track.id.mother.location.name}}</h2>
+		<div id="content">    	
+        		{% include 'ubuzima/report_table.html' %}
+    		</div>
+	</div>
+    
+</div>
+{% block javascript %}			
+<script type="text/javascript">
+
+
+var w_c =[] , ticks  = [], index=0;
+
+var str_l = "<h2 >Child {{track.id.chino}}, Sex: {{track.birth.sex}}, Mother: {{track.id.mother.national_id}}, Born on: {{track.id.dob}} in {{track.id.mother.location.name}} </h2><table class = 'table-design' id = 'table_l'>";
+	
+	var theader_l = "<thead><tr><th>Date</th><th>Weight</th><th>Muac</th><th>Length</th><th>Risk</th></tr></thead>";
+		
+	var tdata_l = "<tbody>";
+
+w_c.push([0,{{track.birth.weight.value}}]);ticks.push([0, "{{track.birth.date}}"]);
+
+tdata_l += "<tr ><td>{{track.birth.date}}</td><td>{{track.birth.weight.value}}</td><td>{{track.birth.muac.value}}</td><td></td><td>{%for r in track.birth.risk %}{% if not forloop.first %},{% endif %}{{r.type.description}}{%endfor%}</td></tr>";
+
+
+{%for tr in track.track%} 
+
+w_c.push([index+1,{{tr.weight.value}}]);
+ticks.push([index+1, "{{tr.date.date}}"]); 
+
+tdata_l += "<tr ><td>{{tr.date.date}}</td><td>{{tr.weight.value}}</td><td>{{tr.muac.value}}</td><td></td><td>{%for r in tr.risk %}{% if not forloop.first %},{% endif %}{{r.type.description}}{%endfor%}</td></tr>";
+
+{%endfor%}
+
+str_l += theader_l + tdata_l +"</table><div ><form> <p style ='display:none'><label for='filename_l' >Filename</label><br></br> <input type='text' name='filename_l' value='exportfile_l.xls' id='filename_l' > </p> <p id='downloadify_l' style='margin-bottom:5px;'> You must have Flash 10 installed to download this file. </p> </form></div>";
+
+var table_l = document.getElementById('table_l');
+	table_l.innerHTML = str_l;
+
+var plotarea_l = document.getElementById("placeholder_l");
+
+    var data_l = [
+        {
+            data: w_c,
+            color: '#409628',
+            label:'Weight',
+            lines: { show: true}
+        }
+    ]; 
+
+   var options_l = {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+	points: {
+			show: true,
+			
+			},
+                xaxis:{ ticks:ticks, show:true },
+                yaxis:{ min:0, show:true },
+        
+    };
+var previousPoint = null;
+    
+    $("#placeholder_l").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0],
+                    y = item.datapoint[1];
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label + ":" + y );
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+$.plot(plotarea_l,data_l,options_l);
+var plogpage = gup("rep-page", document.referrer), logpage = parseInt('{{reports.number}}'), logDiv=document.getElementById('log');
+	
+	if( plogpage && plogpage != logpage || logpage == 2 ){ 
+				$(function(){
+				var myDiv="#log";
+				var toLoad = "#"+' #placeholder';
+				
+				$('#placeholder').hide('fast',loadContent());
+				
+				$('#nav').append('<span id="load">LOADING...</span>');
+				$('#load').fadeOut('normal');
+		
+		
+				function loadContent() {
+					
+					$('#placeholder').load(toLoad,'',showNewContent());
+			
+				}
+				function showNewContent() {
+					$(myDiv).show('normal',hideLoader());
+			
+				}
+				function hideLoader() {
+			
+					$('#load').fadeIn('normal');
+				}
+				});
+				
+		}else{ 
+				$(function(){
+				var myDiv="#table";
+				var toLoad = "#"+' #placeholder';
+				
+				$('#placeholder').hide('fast',loadContent());
+				
+				$('#nav').append('<span id="load">LOADING...</span>');
+				$('#load').fadeOut('normal');
+		
+		
+				function loadContent() {
+					
+					$('#placeholder').load(toLoad,'',showNewContent());
+			
+				}
+				function showNewContent() {
+					$(myDiv).show('normal',hideLoader());
+			
+				}
+				function hideLoader() {
+			
+					$('#load').fadeIn('normal');
+				}
+				});
+				
+		}  
+plotarea_l.show();   	
+
+
+</script>
+{% endblock %}
+{% endblock %}
+
+
+
+
+

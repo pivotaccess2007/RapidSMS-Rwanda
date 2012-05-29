@@ -1,0 +1,287 @@
+{% extends base_template %}
+{% block title %}Child Health Report{% endblock %}
+
+{% block javascripts %}
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/layout.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/modules.css" ></link>
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/tabview.css" ></link>
+<link rel="stylesheet" type="text/css"  href="/static/webapp/stylesheets/stats.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.css"></link>
+<style type="text/css" rel="stylesheet">
+.table-design thead ,.table-design th , .table-design td {
+	border:solid black 1px
+	}
+.odd {
+    background-color: #F8F5E9;<!-- #EEEEFF-->
+    font-size: 10px;
+    padding: 2px;
+}
+.even {
+    background-color: #FFFFFF;
+    font-size: 10px;
+    padding: 2px;
+}
+</style>
+
+<!--[if IE]><script language="javascript" type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery-1.4.1.min.js"></script>
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.table2csv.0.1.1.min.js"></script>
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/downloadify.min.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/downloadify/js/swfobject.js"></script>
+<script language="javascript" language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.multi.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/tabview.js"></script>
+<script type="text/javascript"  src="/static/webapp/javascripts/stats.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.js"></script>
+
+
+
+<script language="javascript" type="text/javascript"> 
+
+function deroulement(form)
+  {
+	
+	path=document.URL;	
+	
+if (form.navlocation.value == "")
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			
+			window.location=path;
+			}
+       }
+	
+else{
+			var loc = form.navlocation.value.split('.')[1];
+			if ( loc == 'Health Centre') loc = "Location";
+			
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			path=path.replace(/(loc=)[^\&]+/, '$1' + form.navlocation.value.split('.')[0].toLowerCase());
+			if(path.indexOf("?") < 0 && path.indexOf("start_date") < 0 )window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else if(path.indexOf("start_date") < 0 )window.location=path+'&start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else window.location=path;
+	}	
+
+ }
+
+function fetch_stats_indics(indic){
+	var path=document.URL;
+	
+	if (path.indexOf(indic) < 0 ) {
+		 if (window.location.pathname.split("dash")[1] !="") window.location=path.replace(window.location.pathname.split("dash")[1], '/'+indic);
+		 else window.location=path.replace(window.location.pathname, window.location.pathname+'/'+indic);
+		}
+	else window.location=path;
+}
+
+
+</script>
+
+
+
+{% endblock %}
+
+<!-- {% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+	<li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %} -->
+
+{% block content %}
+
+<div>
+    <form name="filtering" class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                
+                <tr>
+			<th>Start</th><th ><input style="background-color: white"  type="text" id="pickstartdate" value="{{ start_date }}"  name="start_date" 					readonly="readonly"  onFocus="displayCalendar(form.start_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>End</th><th><input style="background-color: white" type="text" id="pickenddate" value="{{ end_date }}"  name="end_date" 					readonly="readonly"  onFocus="displayCalendar(form.end_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>Location Navigation</th><th><select style="background-color: white" name="navlocation" id="navlocation" >
+						{% if sel %}<option value="{{ sel.id }}.{{sel.type.name}}"  								selected="selected" >{{ sel.name }}&nbsp;{{ sel.type.name}}</option> {% else %}
+							<option value="" selected="selected">{{ usrloc.location.name }}</option>{% endif %}
+						{%  for loc in locs %}
+							<option value="{{ loc.id }}.{{loc.type.name}}" {% if loc.selected  %} 								selected="selected" {% endif %}>{{ loc.name }}</option>
+						{%  endfor %}
+						
+                				
+            					</select></th>
+			<th></th><th></th></tr>
+            </thead>
+            <tbody>
+        <tr>	<td colspan="4">
+		<a href={{request.path}}>Rwanda</a>
+		{% if prv %}
+		&nbsp;&gt;<a href={{request.path}}?province={{prv.id}}>{{ prv.name }}&nbsp;{{ prv.type.name }}</a>
+		{% else %}
+			{% if dst %}&nbsp;&gt;<a href={{request.path}}?province={{dst.parent.id}} >{{ dst.parent.name }}&nbsp;{{ dst.parent.type.name }}</a> 
+			{% else %}
+			{% if lxn %}&nbsp;&gt;<a href={{request.path}}?province={{lxn.province.id}} >{{ lxn.province.name }}&nbsp;{{ lxn.province.type.name }}</a>			{% endif %}
+			{% endif %}
+		{% endif %}
+
+		{% if dst %}
+		&nbsp;&gt;<a href={{request.path}}?district={{dst.id}}>{{ dst.name }}&nbsp;{{ dst.type.name }}</a>
+		{% else %}
+		{% if lxn %}&nbsp;&gt;<a href={{request.path}}?district={{lxn.district.id}} >{{ lxn.district.name }}&nbsp;{{ lxn.district.type.name }}</a>
+		{% endif %}
+		{% endif %}
+		
+		{% if lxn %}
+		&nbsp;&gt;<a href={{request.path}}?location={{lxn.original.id}}>{{ lxn.original.name }}&nbsp;{{ lxn.original.type.name }}</a>
+		{% endif %}
+		
+            	<td> <!-- <input type="button" value="Update Filters"  onClick="return deroulement(this.form);"/> --> </td>
+	   	<td> <!-- <a href={{request.url}}?csv{%if postqn%}&{{postqn}}{%endif%}>Export Reports Log</a> --> </td>
+                </tr>
+		 <tr>
+			<td><!--Table--></td><td ><!--Graph--></td><td><!--Map--></td><td></td>
+			<td></td><td></td><td></td><td><a href="/ubuzima/dash{%if postqn%}?{{postqn}}{%endif%}">Back To Dashboard</a></td>
+		</tr>
+		</tbody>
+        </table>
+    </form>
+<div class="tmp">
+
+
+<div>
+    
+    <div class="clear-hack"></div>
+</div>
+    
+    <table width="100%">
+        
+        <tbody>
+            
+<tr>
+    <td height="21" colspan="5" >
+
+	<div class="TabView" id="TabView">
+	<!-- *** Tabs ************************************************************** -->
+
+<div class="Tabs" style="width: 100%;">
+
+ <a onclick="return fetch_stats_indics('bir');">Births</a> <a onclick="return fetch_stats_indics('pre');">Pregnancies</a><a onclick="return fetch_stats_indics('anc');">ANCs</a><a onclick="return fetch_stats_indics('pnc');">PNCs</a><a onclick="return fetch_stats_indics('ris');">Risks</a><a onclick="return fetch_stats_indics('chi');">Child Health</a><a onclick="return fetch_stats_indics('de');">Death</a><a onclick="return fetch_stats_indics('admin');">Administrative</a>
+  
+</div>
+<!-- End Tabs -->
+
+<!-- *** Pages ************************************************************* -->
+
+<div class="Pages" style="width: 100%; height: 800px;">
+
+<!-- Page Births -->
+<div class="Page"> 
+	
+	<div class="Pad">
+		
+  	</div>
+</div>
+
+<!--End Page Births -->
+
+
+<!-- Page Pregnancies -->
+  <div class="Page"> 
+  <div class="Pad">
+			
+  </div>
+  </div>
+<!--End Page Pregnancies -->
+
+<!-- Page ANCs -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page ANCs -->
+<!-- Page PNCs -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page PNCs -->
+
+<!-- Page Maternal Risks -->
+  <div class="Page"> 
+  <div class="Pad">
+  </div>
+  </div>
+<!--End Page Maternal Risks -->
+
+<!-- Page Child Health -->
+  <div class="Page"> 
+  <div class="Pad">
+	<div id="child_list" style="width:100%;"> <h2 >Child List in {{sel.name}}-{{sel.type.name}} </h2>{% include 'ubuzima/child_table.html' %} </div>
+			
+  </div>
+  </div>
+<!--End Page Child Health -->
+
+<!-- Page Death -->
+  <div class="Page"> 
+  <div class="Pad">
+					
+  </div>
+  </div>
+<!--End Page Death -->
+
+<!-- Page ADMIN -->
+  <div class="Page"> 
+  <div class="Pad">
+				
+  </div>
+  </div>
+<!--End Page ADMIN -->
+
+
+
+</div>
+
+<!-- End pages -->
+	</div>
+    
+</td>
+
+</tr>
+
+        </tbody>
+        <tfoot>
+            
+
+        </tfoot>
+    </table><table width="100%"><tr><td colspan="5"><div id="divImportant" style="width:100%;"></div></td></tr></table>
+   
+    
+<div>
+    
+	<div class="clear-hack"></div>
+</div>
+
+
+</div>
+
+{% block tabview %}
+
+<script type="text/javascript">
+
+tabview_switch('TabView',6);
+
+</script>
+{% endblock %}
+
+
+            
+    <div class="clear-hack"></div>
+</div>
+ 
+{% endblock %}

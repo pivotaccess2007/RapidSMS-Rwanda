@@ -1,0 +1,57 @@
+{% load pagination-tags %}
+
+
+
+<table width="100%"> 
+    <thead>
+        <tr>
+        	<th>Birth Id</th>
+            <th>DOB</th>
+            <th>Location</th>
+            <th>Child Number</th>
+            <th>Mother</th>
+            <th>Sex</th>
+	    <th>Weight(Kg)</th>
+	    <th>MUAC(Cm)</th>
+	    <th>Risk</th>
+        </tr>
+    </thead>
+    <tbody>
+    	{% for report in reports.object_list %}
+            <tr>
+            	<td><a href="/ubuzima/report/{{report.pk}}">{{report.pk}}</a></td>
+                <td>{{report.date|date:"d.m.Y"}}</td>
+                <td><a href="/ubuzima/location/{{report.location.pk}}">{{report.location.name}}</a></td>
+                <td><a href="ubuzima/dash/chi/{{report.pk}}" onclick="return popitup('/ubuzima/dash/chi/{{report.pk}}')">{{report.get_child_id.chino}}</a></td>
+                <td><a href="/ubuzima/patient/{{report.patient.pk}}">{{report.patient.national_id}}</a></td>
+		<td>{{report.get_child.birth.sex}}</td>                
+		<td>{{report.get_child.birth.weight.value}}</td>
+		<td>{{report.get_child.birth.muac.value}}</td>
+		<td>{%for r in report.get_child.birth.risk %}{% if not forloop.first %},{% endif %}{{r.type.description}}{%endfor%}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    
+    <tfoot>
+			<tr>
+				<td colspan="10">
+					{% paginator reports %}
+				</td>
+			</tr>
+			<tr>
+				<td colspan="10">
+				Matching Reports: {{ reports.paginator.count }}
+				</td>
+			</tr>
+	</tfoot>
+</table>
+<script language="javascript" type="text/javascript">
+<!--
+function popitup(url) {
+	newwindow=window.open(url,'name','height=400,width=800,top=200,left=400,resizable=yes,scrollbars=yes');
+	if (window.focus) {newwindow.focus()}
+	return false;
+}
+
+// -->
+</script>

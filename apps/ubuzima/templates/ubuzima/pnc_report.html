@@ -1,0 +1,645 @@
+{% extends base_template %}
+{% block title %}Report Log{% endblock %}
+
+{% block javascripts %}
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/layout.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/stylesheets/modules.css" ></link>
+<link rel="stylesheet" type="text/css" href="/static/webapp/stylesheets/tabview.css" ></link>
+<link rel="stylesheet" type="text/css"  href="/static/webapp/stylesheets/stats.css" ></link>
+<link type="text/css" rel="stylesheet" href="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.css"></link>
+<style type="text/css" rel="stylesheet">
+.table-design thead ,.table-design th , .table-design td {
+	border:solid black 1px
+	}
+</style>
+
+<!--[if IE]><script language="javascript" type="text/javascript" src="/static/webapp/javascripts/excanvas.pack.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery-1.4.1.min.js"></script>
+<script language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.js"></script>
+<script language="javascript" language="javascript" type="text/javascript" src="/static/webapp/javascripts/jquery.flot.multi.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/tabview.js"></script>
+<script type="text/javascript"  src="/static/webapp/javascripts/stats.js"></script>
+<script type="text/javascript" src="/static/webapp/javascripts/calendar/dhtmlgoodies_calendar.js"></script>
+
+<style type="text/css">
+#table-design thead ,#table-design th , #table-design td {
+	border:solid black 1px
+	}
+
+</style>
+
+<script language="javascript" type="text/javascript"> 
+
+function showTooltip(x, y, contents) {
+	
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#eee',
+            opacity: 1.0
+        }).appendTo("body").fadeIn(200);
+    }
+
+
+function deroulement(form)
+  {
+	
+	path=document.URL;	
+	
+if (form.navlocation.value == "")
+	{
+		if (path.indexOf("?") < 0 && path.indexOf("start_date") <0 ){ window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+	}
+		
+		else {
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			
+			window.location=path;
+			}
+       }
+	
+else{
+			var loc = form.navlocation.value.split('.')[1];
+			if ( loc == 'Health Centre') loc = "Location";
+			
+			path=path.replace(/(start_date=)[^\&]+/, '$1' + form.start_date.value);
+			path=path.replace(/(end_date=)[^\&]+/, '$1' + form.end_date.value);
+			path=path.replace(/(loc=)[^\&]+/, '$1' + form.navlocation.value.split('.')[0].toLowerCase());
+			if(path.indexOf("?") < 0 && path.indexOf("start_date") < 0 )window.location=path+'?start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else if(path.indexOf("start_date") < 0 )window.location=path+'&start_date='+form.start_date.value+'&end_date='+form.end_date.value;
+			else window.location=path;
+	}	
+
+ }
+
+function fetch_stats_indics(indic){
+	var path=document.URL;
+	
+	if (path.indexOf(indic) < 0 ) {
+		 if (window.location.pathname.split("dash")[1] !="") window.location=path.replace(window.location.pathname.split("dash")[1], '/'+indic);
+		 else window.location=path.replace(window.location.pathname, window.location.pathname+'/'+indic);
+		}
+	else window.location=path;
+}
+
+</script>
+
+
+
+{% endblock %}
+
+<!-- {% block page_tabs %}
+<ul id="page-tabs">
+	<li class="page"><a href="/ubuzima/reminders">Reminders</a></li>
+	<li class="page"><a href="/ubuzima/alerts">Alerts</a></li>
+	<li class="page"><a href="/ubuzima/stats">Statistics</a></li>
+</ul>
+{% endblock %} -->
+
+{% block content %}
+
+<div>
+    <form name="filtering" class="topstrip">
+        <h2>Filtering</h2>
+        <table width="100%">
+            <thead>
+                
+                <tr>
+			<th>Start</th><th ><input style="background-color: white"  type="text" id="pickstartdate" value="{{ start_date }}"  name="start_date" 					readonly="readonly"  onFocus="displayCalendar(form.start_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>End</th><th><input style="background-color: white" type="text" id="pickenddate" value="{{ end_date }}"  name="end_date" 					readonly="readonly"  onFocus="displayCalendar(form.end_date,'dd.mm.yyyy',this)" onchange="return deroulement(this.form);"/></th>
+			<th>Location Navigation</th><th><select style="background-color: white" name="navlocation" id="navlocation" >
+						{% if sel %}<option value="{{ sel.id }}.{{sel.type.name}}"  								selected="selected" >{{ sel.name }}&nbsp;{{ sel.type.name}}</option> {% else %}
+							<option value="" selected="selected">{{ usrloc.location.name }}</option>{% endif %}
+						{%  for loc in locs %}
+							<option value="{{ loc.id }}.{{loc.type.name}}" {% if loc.selected  %} 								selected="selected" {% endif %}>{{ loc.name }}</option>
+						{%  endfor %}
+						
+                				
+            					</select></th>
+			<th></th><th></th></tr>
+            </thead>
+            <tbody>
+        <tr>	<td colspan="4">
+		<a href={{request.path}}>Rwanda</a>
+		{% if prv %}
+		&nbsp;&gt;<a href={{request.path}}?province={{prv.id}}>{{ prv.name }}&nbsp;{{ prv.type.name }}</a>
+		{% else %}
+			{% if dst %}&nbsp;&gt;<a href={{request.path}}?province={{dst.parent.id}} >{{ dst.parent.name }}&nbsp;{{ dst.parent.type.name }}</a> 
+			{% else %}
+			{% if lxn %}&nbsp;&gt;<a href={{request.path}}?province={{lxn.province.id}} >{{ lxn.province.name }}&nbsp;{{ lxn.province.type.name }}</a>			{% endif %}
+			{% endif %}
+		{% endif %}
+
+		{% if dst %}
+		&nbsp;&gt;<a href={{request.path}}?district={{dst.id}}>{{ dst.name }}&nbsp;{{ dst.type.name }}</a>
+		{% else %}
+		{% if lxn %}&nbsp;&gt;<a href={{request.path}}?district={{lxn.district.id}} >{{ lxn.district.name }}&nbsp;{{ lxn.district.type.name }}</a>
+		{% endif %}
+		{% endif %}
+		
+		{% if lxn %}
+		&nbsp;&gt;<a href={{request.path}}?location={{lxn.original.id}}>{{ lxn.original.name }}&nbsp;{{ lxn.original.type.name }}</a>
+		{% endif %}
+		
+            	<td> <!-- <input type="button" value="Update Filters"  onClick="return deroulement(this.form);"/> --> </td>
+	   	<td> <!-- <a href={{request.url}}?csv{%if postqn%}&{{postqn}}{%endif%}>Export Reports Log</a> --> </td>
+                </tr>
+		 <tr>
+			<td><!--Table--></td><td ><!--Graph--></td><td><!--Map--></td><td></td>
+			<td></td><td></td><td></td><td></td>
+		</tr>
+		</tbody>
+        </table>
+    </form>
+<div class="tmp">
+
+
+<div>
+    
+    <div class="clear-hack"></div>
+</div>
+    
+    <table width="100%">
+        
+        <tbody>
+            
+<tr>
+    <td height="21" colspan="5" >
+
+	<div class="TabView" id="TabView">
+	<!-- *** Tabs ************************************************************** -->
+
+<div class="Tabs" style="width: 100%;">
+
+ <a onclick="return fetch_stats_indics('bir');">Births</a> <a onclick="return fetch_stats_indics('pre');">Pregnancies</a><a onclick="return fetch_stats_indics('anc');">ANCs</a><a onclick="return fetch_stats_indics('pnc');">PNCs</a><a onclick="return fetch_stats_indics('ris');">Risks</a><a onclick="return fetch_stats_indics('chi');">Child Health</a><a onclick="return fetch_stats_indics('de');">Death</a><a onclick="return fetch_stats_indics('admin');">Administrative</a>
+  
+</div>
+<!-- End Tabs -->
+
+<!-- *** Pages ************************************************************* -->
+
+<div class="Pages" style="width: 100%; height: 400px;">
+
+<!-- Page Births -->
+<div class="Page"> 
+	
+	<div class="Pad">
+		
+  	</div>
+</div>
+
+<!--End Page Births -->
+
+
+<!-- Page Pregnancies -->
+  <div class="Page"> 
+  <div class="Pad">
+
+  </div>
+  </div>
+<!--End Page Pregnancies -->
+
+<!-- Page ANCs -->
+<div class="Page"> 
+  <div class="Pad">
+
+  </div>
+  </div>
+<!--End Page ANCs -->
+
+
+
+
+<!-- Page PNCs -->
+  <div class="Page"> 
+  <div class="Pad">
+			<div id="wrapper" style="width:100%;">
+    <ul id="nav">
+        <li><a href=#" title="table" >Table</a></li>
+        <li><a href="#" title="graph">Graph</a></li>
+        <li><a href="#" title="map">Map</a></li>        
+    </ul>
+    	<div id="placeholder"></div>
+	<div id="table">
+
+		<div id="content">    	
+        		<div id="table1"  ></div></br><br/>
+			<div id="table2"  ></div></br><br/>
+    		</div>
+	</div>
+	<div id="graph">
+		<div id="content">    	
+        		<h2 >Comparison of PNC Report Statistics in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+		<div id="placeholder_l" style=" width: 100%;height:400px;"></div>
+		<h2 >Variation of PNC Statistics in {{sel.name}}-{{sel.type.name}} {{filters.period.start|date:"d/M/Y"}} - {{filters.period.end|date:"d/M/Y"}}</h2>
+		<div id="placeholder_m" style=" width: 100%;height:400px;"></div>
+    		</div>
+	</div>
+	<div id="map">
+
+		<p>Hi Map! "</p>
+		<div id="content">    	
+        		<p>Mapsdhsjd!</p>
+    		</div>
+	</div>
+    
+</div>
+			
+		
+
+		
+  </div>
+  </div>
+<!--End Page PNCs -->
+
+
+<!-- Page Maternal Risks -->
+  <div class="Page"> 
+  <div class="Pad">
+
+  </div>
+  </div>
+<!--End Page Maternal Risks -->
+
+<!-- Page Child Health -->
+  <div class="Page"> 
+  <div class="Pad">
+
+  </div>
+  </div>
+<!--End Page Child Health -->
+
+<!-- Page Death -->
+  <div class="Page"> 
+  <div class="Pad">
+
+  </div>
+  </div>
+<!--End Page Death -->
+
+<!-- Page ADMIN -->
+  <div class="Page"> 
+  <div class="Pad">
+			
+  </div>
+  </div>
+<!--End Page ADMIN -->
+
+</div>
+
+<!-- End pages -->
+	</div>
+    
+</td>
+
+</tr>
+
+        </tbody>
+        <tfoot>
+            
+
+        </tfoot>
+    </table><table width="100%"><tr><td colspan="5"><div id="divImportant" style="width:100%;"></div></td></tr></table>
+   
+    
+<div>
+    <!--
+    <div>
+        <table class="hindics" width="100%">
+            <thead>
+                <tr class="smallhead"><th colspan="3">RapidSMS Data</th></tr>
+                <tr><th>Description</th><th>Rate</th><th></th></tr>
+            </thead>
+            <tbody>
+                {# for hind in hindics.object_list #}
+                <tr><td><a
+                        href="indicator/{#hind.id#}/html?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">{#hind.proper_name#}</a></td><td>{#hind.instances_count#}</td><td>[<a
+                        href="indicator/{#hind.id#}/csv?start_date={#start_date#}&end_date={#end_date#}&location={#location#}">export</a>]</td></tr>
+                {# endfor #}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">{# paginator hindics #}</td>
+                </tr>
+                <tr>
+                    <td colspan="3">Matching Reports: {# hindics.paginator.count #}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    -->
+	<div class="clear-hack"></div>
+</div>
+
+
+</div>
+
+{% block tabview %}
+
+<script type="text/javascript">
+
+
+tabview_switch('TabView',4);
+
+
+var locs = "{% for l in locs %} {% if not forloop.first %},{% endif %}{{l.name}}-{{l.id}}-{{l.type}} {% endfor %}".split(",") ;
+var annot="{{annot_l}}";
+
+var month_names = ["Month", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+var months_b = "{% for m in track.months %} {% if not forloop.first %},{% endif %}{{m}} {% endfor %}".split(",") ;
+
+
+if (annot.split(",")[0] == "location__parent__parent__parent__name"){
+var pnc1 = jQuery.parseJSON('{ {% for tr in track.items.pnc1 %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__parent__name}}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), pnc2 = jQuery.parseJSON('{ {% for tr in track.items.pnc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),pnc3 = jQuery.parseJSON('{ {% for tr in track.items.pnc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.items.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__parent__name }}-{{tr.location__parent__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+
+}else if(annot.split(",")[0] == "location__parent__parent__name"){
+	var pnc1 = jQuery.parseJSON('{ {% for tr in track.items.pnc1 %} {% if not forloop.first %},{% endif %} "{{tr.location__parent__parent__name}}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'), pnc2 = jQuery.parseJSON('{ {% for tr in track.items.pnc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),pnc3 = jQuery.parseJSON('{ {% for tr in track.items.pnc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.items.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__parent__parent__name }}-{{tr.location__parent__parent__pk}}" : {{tr.number}}  {% endfor %} }');
+}else if(annot.split(",")[0] == "location__name"){
+	var pnc1 = jQuery.parseJSON('{ {% for tr in track.items.pnc1 %} {% if not forloop.first %},{% endif %} "{{tr.location__name}}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'), pnc2 = jQuery.parseJSON('{ {% for tr in track.items.pnc2 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),pnc3 = jQuery.parseJSON('{ {% for tr in track.items.pnc3 %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }'),tot = jQuery.parseJSON('{ {% for tr in track.items.tot %} {% if not forloop.first %},{% endif %} "{{ tr.location__name }}-{{tr.location__pk}}" : {{tr.number}}  {% endfor %} }');
+	}
+
+
+var pnc1_m = jQuery.parseJSON('{ {% for tr in track.items_m.pnc1_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),pnc2_m = jQuery.parseJSON('{ {% for tr in track.items_m.pnc2_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'),pnc3_m = jQuery.parseJSON('{ {% for tr in track.items_m.pnc3_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }'), tot_m = jQuery.parseJSON('{ {% for tr in track.items_m.tot_m %} {% if not forloop.first %},{% endif %} "{{ tr.month }}-{{tr.year}}" : {{tr.number}}  {% endfor %} }');
+
+var pnc1_c =[] , pnc2_c = [], ticks  = [], pnc3_c = [], globaltot=0, pnc1_tot=0, pnc2_tot=0, pnc3_tot=0, pnc1_totp=0, pnc2_totp=0, pnc3_totp=0;
+
+var pnc1_c_m =[] , pnc2_c_m = [], ticks_m  = [], pnc3_c_m = [], globaltot_m=0,pnc1_tot_m=0,pnc2_tot_m=0,pnc3_tot_m=0,pnc1_totp_m=0,pnc2_totp_m=0,pnc3_totp_m=0;
+
+	var table1 = document.createElement('table');
+	
+	var theader1_1 = "<thead><!--<tr><th></th><th colspan=4>Delivery Report Numbers</th><th colspan=3>Delivery Report Percentages</th></tr>-->";
+	var tdata1 = "";
+	var str1 = "<table id='table-design'>";
+	var theader1 = "<tr><th>Location</th><th>PNC1</th><th>PNC2</th><th>PNC3</th><th>Total</th><th>PNC1(%)</th><th>PNC2(%)</th><th>PNC3(%)</th></tr></thead>";
+
+
+
+	var theader2_1 = "<thead><!--<tr><th></th><th colspan=5>Delivery Report Numbers</th><th colspan=4>Delivery Report Percentages</th></tr> -->";
+	var tdata2 = "";
+	var str2 = "<table id='table-design'>";
+	var theader2 = "<tr><th>Month</th><th> PNC1 </th><th> PNC2   </th><th> PNC3  </th><th>Total</th><th> PNC1(%) </th><th>  PNC2(%)  </th><th>  PNC3(%)  </th></tr></thead>";
+
+
+	for ( var l in locs) {
+			var pnc1_n,pnc2_n,pnc3_n,tot_n,pnc1_np,pnc2_np,pnc3_np;
+			
+			var loc_n = locs[l].trim().split("-")[0];
+			var loc_id = locs[l].trim().split("-")[1];
+			var loc_t = locs[l].trim().split("-")[2];
+			if ( loc_t == 'Health Centre') loc_t = "Location";
+			if (pnc1[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) pnc1_n = pnc1[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else pnc1_n = 0;
+			if (pnc2[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) pnc2_n = pnc2[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]; 
+			else pnc2_n = 0;
+			if (pnc3[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) pnc3_n = anc3[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]];
+			else pnc3_n = 0;
+			if (tot[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]) { 	tot_n = tot[locs[l].trim().split("-")[0]+"-"+locs[l].trim().split("-")[1]]; 
+							pnc1_np = Math.round((pnc1_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2); 
+							pnc2_np = Math.round((pnc2_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							pnc3_np = Math.round((pnc3_n*100/tot_n)* Math.pow(10,2))/Math.pow(10,2);
+							
+							}else { tot_n = 0;
+									pnc1_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//fac_n*100/tot_n.toFixed(2); 
+									pnc2_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//route_n*100/tot_n.toFixed(2);
+									pnc3_np = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//home_n*100/tot_n.toFixed(2);
+									
+								}
+			
+			pnc1_c.push([l,pnc1_np]);
+			pnc2_c.push([l,pnc2_np]);
+			pnc3_c.push([l,pnc3_np]);
+			ticks.push([l, loc_n]);
+			globaltot += tot_n, pnc1_tot += pnc1_n, pnc2_tot += pnc2_n, pnc3_tot += pnc3_n;
+				//alert(month_names[months_b[s].trim().split("-")[0]]);//+"-"+months_b[s+1].split("-")[1]);
+
+	tdata1 += "<tr><td><a href={{url.path}}?"+loc_t.toLowerCase()+"="+loc_id+">"+loc_n+"</a></td>"+"<td>"+pnc1_n+"</td>"+"<td>"+pnc2_n+"</td>"+"<td>"+pnc3_n+"</td>"+"<td>"+tot_n+"</td>"+"<td>"+pnc1_np+"</td>"+"<td>"+pnc2_np+"</td>"+"<td>"+pnc3_np+"</td></tr>";
+
+	
+			
+			}
+		if (globaltot > 0)pnc1_totp = Math.round((pnc1_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),pnc2_totp = Math.round((pnc2_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2),pnc3_totp = Math.round((pnc3_tot * 100/globaltot)* Math.pow(10,2))/Math.pow(10,2); 
+
+		tdata1 += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+pnc1_tot+"</b></td>"+"<td><b>"+pnc2_tot+"</b></td>"+"<td><b>"+pnc3_tot+"</b></td>"+"<td><b>"+globaltot+"</b></td>"+"<td><b>"+pnc1_totp+"</b></td>"+"<td><b>"+pnc2_totp+"</b></td>"+"<td><b>"+pnc3_totp+"</b></td></tr>";
+
+
+		
+		str1 += theader1_1+theader1+tdata1+"</table>";
+
+	var tableDiv1 = document.getElementById('table1');
+	tableDiv1.innerHTML = str1;
+
+
+
+	for ( var s in months_b) {
+			var pnc1_n_m,pnc2_n_m,pnc3_n_m,tot_n_m,pnc1_np_m,pnc2_np_m,pnc3_np_m;
+
+			var month_n = month_names[months_b[s].trim().split("-")[0]]+"-"+months_b[s].trim().split("-")[1];
+
+			if (pnc1_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) pnc1_n_m = pnc1_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else pnc1_n_m = 0;
+			if (pnc2_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) pnc2_n_m = pnc2_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]; 
+			else pnc2_n_m = 0;
+			if (pnc3_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) pnc3_n_m = pnc3_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]];
+			else pnc3_n_m = 0;
+			if (tot_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]) { tot_n_m = tot_m[months_b[s].trim().split("-")[0]+"-"+months_b[s].trim().split("-")[1]]; 
+							pnc1_np_m = Math.round((pnc1_n_m*100/tot_n_m)* Math.pow(10,2))/Math.pow(10,2); 
+							pnc2_np_m = Math.round((pnc2_n_m*100/tot_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							pnc3_np_m = Math.round((pnc3_n_m*100/tot_n_m)* Math.pow(10,2))/Math.pow(10,2);
+							
+							}else { tot_n_m = 0;
+									pnc1_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//fac_n*100/tot_n.toFixed(2); 
+									pnc2_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//route_n*100/tot_n.toFixed(2);
+									pnc3_np_m = Math.round((0)* Math.pow(10,2))/Math.pow(10,2);//home_n*100/tot_n.toFixed(2);
+									
+								}
+			
+			pnc1_c_m.push([s,pnc1_np_m]);
+			pnc2_c_m.push([s,pnc2_np_m]);
+			pnc3_c_m.push([s,pnc3_np_m]);
+			ticks_m.push([s, month_n]);
+			globaltot_m += tot_n_m, pnc1_tot_m += pnc1_n_m, pnc2_tot_m += pnc2_n_m, pnc3_tot_m += pnc3_n_m;
+				//alert(month_names[months_b[s].trim().split("-")[0]]);//+"-"+months_b[s+1].split("-")[1]);
+
+	tdata2 += "<tr><td>"+month_n+"</td>"+"<td>"+pnc1_n_m+"</td>"+"<td>"+pnc2_n_m+"</td>"+"<td>"+pnc3_n_m+"</td>"+"<td>"+tot_n_m+"</td>"+"<td>"+pnc1_np_m+"</td>"+"<td>"+pnc2_np_m+"</td>"+"<td>"+pnc3_np_m+"</td></tr>";
+	
+	
+			
+			}
+		if (globaltot_m > 0) pnc1_totp_m = Math.round((pnc1_tot_m * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),pnc2_totp_m = Math.round((pnc2_tot_m * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2),pnc3_totp_m = Math.round((pnc3_tot_m * 100/globaltot_m)* Math.pow(10,2))/Math.pow(10,2); 
+
+		tdata2 += "<tr><td><b>TOTAL</b></td>"+"<td><b>"+pnc1_tot_m+"</b></td>"+"<td><b>"+pnc2_tot_m+"</b></td>"+"<td><b>"+pnc3_tot_m+"</b></td>"+"<td><b>"+globaltot_m+"</b></td>"+"<td><b>"+pnc1_totp_m+"</b></td>"+"<td><b>"+pnc2_totp_m+"</b></td>"+"<td><b>"+pnc3_totp_m+"</b></td></tr>";
+		
+		str2 += theader2_1+theader2+tdata2+"</table>";
+
+
+	var tableDiv2 = document.getElementById('table2');
+	tableDiv2.innerHTML = str2;
+
+
+var plotarea_l = document.getElementById("placeholder_l");
+
+var data_l =[
+        {
+            data: pnc1_c,
+            color: '#409628',
+            label:' PNC1 ',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: pnc2_c,
+            color: '#C0504D',
+            label:' PNC2 ',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        },
+        {
+            data: pnc3_c,
+            label:' PNC3 ',
+            bars: { show: true, align:'center', barWidth:0.2 }
+        }
+    ];
+
+var options_l = {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks },
+                yaxis:{ min:0,max:100,ticks:[[10,"10%"],[20,"20%"],[30,"30%"],[40,"40%"],[50,"50%"],[60,"60%"],[70,"70%"],[80,"80%"],[90,"90%"],[100,"100%"]] },
+        multiplebars: true
+    };
+
+
+var plotarea_m = document.getElementById("placeholder_m");
+var data_m = [
+		{
+			label: " PNC1 ",
+			data: pnc1_c_m,
+			lines: { show: true },
+			points: { show: true }
+		},
+		{
+			label: " PNC2 ",
+			data: pnc2_c_m,
+			lines: { show: true },
+			points: { show: true }
+		},
+		{
+			label: " PNC3 ",
+			data: pnc3_c_m,
+			lines: { show: true },
+			points: { show: true }
+		}
+	];
+
+/*	
+var options_m = {
+			
+		legend: {
+				
+			show: true,
+			margin: 10,
+			backgroundOpacity: 0.5
+			},
+		points: {
+			show: true,
+			radius: 1
+			},
+		lines: {
+			show: true
+			},
+		grid: {
+			borderWidth:1,
+				
+			},
+		xaxis: {
+			ticks:ticks_m
+				
+			},
+		yaxis: {
+			max : 100,
+			show: true,
+			ticks:[[10,"10%"],[20,"20%"],[30,"30%"],[40,"40%"],[50,"50%"],[60,"60%"],[70,"70%"],[80,"80%"],[90,"90%"],[100,"100%"]],
+			tickDecimals: 0
+			}
+		}; */
+
+var options_m = {
+            selection: { mode: "xy" },
+        grid: { hoverable: true, clickable: true },
+                xaxis:{ ticks:ticks_m },
+                yaxis:{ min:0 },
+        multiplebars: true
+    };
+
+
+
+
+var previousPoint = null;
+    
+    $("#placeholder_l").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label + ":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+
+   $("#placeholder_m").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+	
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0]/*.toFixed(2)*/,
+                    y = item.datapoint[1]/*.toFixed(2)*/;
+                
+                showTooltip(item.pageX, item.pageY,
+                            item.series.label +":" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+
+
+$.plot(plotarea_l,data_l,options_l); 
+$.plot(plotarea_m,data_m,options_m);
+
+
+plotarea_l.show();
+plotarea_m.show();
+
+
+</script>
+{% endblock %}
+
+
+            
+    <div class="clear-hack"></div>
+</div>
+ 
+{% endblock %}
