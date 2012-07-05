@@ -6,7 +6,8 @@ local.ini
 .settings/
 kannel.conf
 rapidsms.ini
-kannel.conf.*
+kannel.conf
+kannel.conf.swp
 build/lib.linux-i686-2.6/rapidsms/backends/cristal.py
 build/lib.linux-i686-2.6/rapidsms/backends/cristalpy.py
 build/lib.linux-i686-2.6/rapidsms/backends/kannel.py
