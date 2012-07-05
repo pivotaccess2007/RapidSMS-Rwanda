@@ -4,6 +4,9 @@ local.ini
 .project
 .pydevproject
 .settings/
+kannel.conf
+rapidsms.ini
+kannel.conf.*
 build/lib.linux-i686-2.6/rapidsms/backends/cristal.py
 build/lib.linux-i686-2.6/rapidsms/backends/cristalpy.py
 build/lib.linux-i686-2.6/rapidsms/backends/kannel.py
